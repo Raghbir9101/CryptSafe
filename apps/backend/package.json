@@ -1,0 +1,16 @@
+{
+  "name": "@repo/backend",
+  "scripts": {
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "root": "*",
+    "@repo/typescript-config": "*",
+    "@repo/types": "*"
+  }
+}
