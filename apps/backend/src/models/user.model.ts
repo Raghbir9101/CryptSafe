@@ -11,5 +11,9 @@ const userSchema: Schema = new Schema({
 
 const User = mongoose.model<UserInterface & Document>("user", userSchema);
 
+
+
+
+
 export default User;
 export type { UserInterface };

@@ -64,7 +64,7 @@ export default class AuthController {
         });
 
         const { password: _, ...userWithoutPassword } = user;
-
+        res.cookie('authorization', token, { httpOnly: true, secure: true, sameSite: 'none' });
         res.status(HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     })
 

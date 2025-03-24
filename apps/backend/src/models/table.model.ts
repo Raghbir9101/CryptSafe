@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 import { TableInterface } from "@repo/types";
 const tableSchema: Schema = new Schema({
   name: { type: String, required: true },
@@ -16,16 +16,20 @@ const tableSchema: Schema = new Schema({
   },
   sharedWith: {
     type: [{
-      email: { type: String, required: true },
+      email: { type: String, required: false },
       fieldPermission: {
         type: [{
-          fieldName: { type: String, required: true },
-          permission: { type: String, required: true, enum: ["READ", "WRITE"] },
-        }], required: true
+          fieldName: { type: String, },
+          permission: { type: String, enum: ["READ", "WRITE"] },
+        }],
       },
-      isBlocked: { type: Boolean, required: true, default: false },
-    }], required: true
+      isBlocked: { type: Boolean, default: false },
+    }],
   },
+  createdBy: {
+    type: Types.ObjectId,
+    ref: "user"
+  }
 }, { timestamps: true });
 
 const Table = mongoose.model<TableInterface & Document>("table", tableSchema);
