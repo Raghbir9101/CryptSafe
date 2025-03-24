@@ -1,4 +1,4 @@
 import UserInterface from "./User";
 import { TableInterface } from "./Table";
-
-export type { UserInterface, TableInterface };
+import DataInterface from "./Data";
+export type { UserInterface, TableInterface, DataInterface };

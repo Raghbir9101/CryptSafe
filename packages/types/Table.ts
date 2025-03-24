@@ -7,7 +7,7 @@ export interface TableInterface {
 
 interface FieldInterface {
     name: string;
-    type: string;
+    type: "TEXT" | "NUMBER" | "DATE" | "BOOLEAN" | "SELECT" | "MULTISELECT";
     required: boolean;
     hidden: boolean;
     options: string[];
