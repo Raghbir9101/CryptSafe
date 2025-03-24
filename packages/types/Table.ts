@@ -3,11 +3,13 @@ export interface TableInterface {
     description: string;
     fields: FieldInterface[];
     sharedWith: SharedWithInterface[];
+    createdBy: string;
 }
 
 interface FieldInterface {
     name: string;
     type: "TEXT" | "NUMBER" | "DATE" | "BOOLEAN" | "SELECT" | "MULTISELECT";
+    unique: boolean;
     required: boolean;
     hidden: boolean;
     options: string[];

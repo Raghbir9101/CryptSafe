@@ -7,6 +7,7 @@ const tableSchema: Schema = new Schema({
     type: [
       {
         name: { type: String, required: true },
+        unique: { type: Boolean, required: true },
         type: { type: String, required: true, enum: ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"] },
         required: { type: Boolean, required: true },
         hidden: { type: Boolean, required: true },
