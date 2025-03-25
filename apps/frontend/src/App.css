@@ -1,9 +1,0 @@
-.tableRow {
-    display: table-row;
-    row-gap: 10px;
-}
-.tableCell {
-    display: table-cell !important;
-    align-content: flex-start;
-    padding: 5px;
-}
