@@ -1,0 +1,28 @@
+{
+    "name": "IMS Cloud",
+    "short_name": "Inventory Management System",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "lang": "en",
+    "scope": "/",
+    "description": "Inventory Management System with Supplier Management.",
+    "theme_color": "#31571f",
+    "icons": [
+        {
+            "src": "/vite.svg",
+            "sizes": "144x144",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "/vite.svg",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/vite.svg",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
