@@ -1,8 +1,11 @@
 import React from 'react'
+import { NavMain } from './pages/Sidebar/nav-main'
 
 function App() {
   return (
-    <div>App</div>
+    <div>
+      <NavMain />
+    </div>
   )
 }
 
