@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import { TableInterface } from "@repo/types";
+const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
 const tableSchema: Schema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
@@ -8,7 +9,11 @@ const tableSchema: Schema = new Schema({
       {
         name: { type: String, required: true },
         unique: { type: Boolean, required: true },
-        type: { type: String, required: true, enum: ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"] },
+        type: {
+          type: String,
+          required: true,
+          enum: validTypes,
+        },
         required: { type: Boolean, required: true },
         hidden: { type: Boolean, required: true },
         options: { type: [String], required: false },

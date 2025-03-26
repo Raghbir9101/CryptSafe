@@ -3,19 +3,20 @@ import dotenv from "dotenv";
 import routes from "./routes";
 import cors from "cors";
 import { errorHandler } from "./utils/errorHandler";
-import cookieParser from 'cookie-parser'
+import CookieParser from "cookie-parser";
 dotenv.config();
 
 const app: Application = express();
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(cookieParser())
 app.use(cors({
-    origin:"*",
-    credentials:true
+    origin: "http://localhost:5173",
+    credentials: true
 }));
+app.use(CookieParser());
+app.use(express.json());
+
 // Routes
 app.get("/", (req, res) => {
     res.send("Hello World!");

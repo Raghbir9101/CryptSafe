@@ -18,6 +18,7 @@ export default class TableController {
 
     static createTable = asyncHandler(async (req, res): Promise<any> => {
         const { name, fields, description } = req.body
+        console.log(req.body, 'req.body');
         if (!name || !fields || !description) {
             return res.status(400).json({ message: "All fields are required" })
         }

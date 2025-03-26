@@ -18,20 +18,20 @@ export const isAuthenticated = computed(() => {
 })
 
 export const login = async (email: string, password: string) => {
-    Auth.value = {...Auth.value, status: 'loading'}
+    Auth.value = { ...Auth.value, status: 'loading' }
     try {
-        const response = await api.post('/auth/login', { email, password });
-        Auth.value = {...Auth.value, loggedInUser: response.data, status: 'success'}
+        const response = await api.post('/auth/login', { email, password }, { withCredentials: true });
+        Auth.value = { ...Auth.value, loggedInUser: response.data, status: 'success' }
         return response.data
     } catch (error) {
-        Auth.value = {...Auth.value, status: 'error'}
+        Auth.value = { ...Auth.value, status: 'error' }
         return error
     }
 }
 
 export const register = async (email: string, password: string, userName: string) => {
     try {
-        const response = await api.post('/auth/register', { email, password, userName });
+        const response = await api.post('/auth/register', { email, password, userName }, { withCredentials: true });
         return response.data
     } catch (error) {
         return error
@@ -40,10 +40,10 @@ export const register = async (email: string, password: string, userName: string
 
 export const getUserAfterRefresh = async () => {
     try {
-        const response = await api.get('/users/getUser');
-        Auth.value = {...Auth.value, loggedInUser: response.data}
+        const response = await api.get('/users/getUser', { withCredentials: true });
+        Auth.value = { ...Auth.value, loggedInUser: response.data }
     } catch (error) {
-        Auth.value = {...Auth.value, loggedInUser: null}
+        Auth.value = { ...Auth.value, loggedInUser: null }
     }
 }
 
