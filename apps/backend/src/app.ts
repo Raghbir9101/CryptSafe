@@ -12,7 +12,10 @@ const app: Application = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser())
-app.use(cors());
+app.use(cors({
+    origin:"*",
+    credentials:true
+}));
 // Routes
 app.get("/", (req, res) => {
     res.send("Hello World!");

@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals-react';
+import { computed, signal } from '@preact/signals-react';
 import { UserInterface } from '@repo/types';
 import { api } from '../../Utils/utils';
 
@@ -11,6 +11,10 @@ interface AuthState {
 export const Auth = signal<AuthState>({
     loggedInUser: null,
     status: 'idle',
+})
+
+export const isAuthenticated = computed(() => {
+    return Auth.value.loggedInUser !== null
 })
 
 export const login = async (email: string, password: string) => {
@@ -26,15 +30,20 @@ export const login = async (email: string, password: string) => {
 }
 
 export const register = async (email: string, password: string, userName: string) => {
-    Auth.value = {...Auth.value, status: 'loading'}
     try {
         const response = await api.post('/auth/register', { email, password, userName });
-        Auth.value = {...Auth.value, loggedInUser: response.data, status: 'success'}    
         return response.data
     } catch (error) {
-        Auth.value = {...Auth.value, status: 'error'}
         return error
     }
 }
 
+export const getUserAfterRefresh = async () => {
+    try {
+        const response = await api.get('/users/getUser');
+        Auth.value = {...Auth.value, loggedInUser: response.data}
+    } catch (error) {
+        Auth.value = {...Auth.value, loggedInUser: null}
+    }
+}
 

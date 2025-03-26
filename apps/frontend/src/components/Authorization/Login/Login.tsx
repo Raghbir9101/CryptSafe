@@ -1,10 +1,8 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import Link from '@mui/material/Link';
@@ -13,9 +11,9 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from '../../Icons/Icons';
-import { useSignal } from '@preact/signals-react';
+import { GoogleIcon, SitemarkIcon } from '../../Icons/Icons';
 import { login } from '../../Services/AuthService';
+import { NavLink } from 'react-router-dom';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -59,14 +57,11 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function SignUp() {
+export default function SignIn() {
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
-
   const validateInputs = () => {
     const email: any = document.getElementById('email');
     const password: any = document.getElementById('password');
@@ -96,7 +91,7 @@ export default function SignUp() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (nameError || emailError || passwordError) {
+    if (emailError || passwordError) {
       return;
     }
     const data = new FormData(event.currentTarget);
@@ -106,7 +101,7 @@ export default function SignUp() {
     //   email: data.get('email'),
     //   password: data.get('password'),
     // });
-    const response = await login(data.get('email'), data.get('password'));
+    const response = await login(data.get('email') as string, data.get('password') as string);
     console.log(response);
   };
 
@@ -182,13 +177,10 @@ export default function SignUp() {
             </Button>
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
-              <Link
-                href="/material-ui/getting-started/templates/sign-in/"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
+              <NavLink to="/register" style={{ color: 'blue' }}
               >
-                Sign in
-              </Link>
+                Sign Up
+              </NavLink>
             </Typography>
           </Box>
         </Card>

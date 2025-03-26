@@ -1,10 +1,8 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import Link from '@mui/material/Link';
@@ -13,9 +11,9 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from '../../Icons/Icons';
-import { useSignal } from '@preact/signals-react';
-import { login, register } from '../../Services/AuthService';
+import { GoogleIcon, SitemarkIcon } from '../../Icons/Icons';
+import { register } from '../../Services/AuthService';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -60,6 +58,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function Register() {
+  const nav = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
@@ -110,13 +109,12 @@ export default function Register() {
       return;
     }
     const data = new FormData(event.currentTarget);
-    // console.log({
-    //   name: data.get('name'),
-    //   lastName: data.get('lastName'),
-    //   email: data.get('email'),
-    //   password: data.get('password'),
-    // });
-    const response = await register(data.get('email'), data.get('password'), data.get('name'));
+
+    const response = await register(data.get('email') as string, data.get('password') as string, data.get('name') as string);
+    if(response.error) {
+      return alert(response.error);
+    }
+    nav("/login")
     console.log(response);
   };
 
@@ -206,13 +204,10 @@ export default function Register() {
             </Button>
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
-              <Link
-                href="/material-ui/getting-started/templates/sign-in/"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
+              <NavLink to="/login" style={{ color: 'blue' }}
               >
                 Sign in
-              </Link>
+              </NavLink>
             </Typography>
           </Box>
         </Card>
