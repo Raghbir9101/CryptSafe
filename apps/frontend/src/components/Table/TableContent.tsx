@@ -26,6 +26,10 @@ import {
   randomId,
   randomArrayItem,
 } from '@mui/x-data-grid-generator';
+import { getTables } from '../Services/TableService';
+import { useState } from 'react';
+import { api } from '../../Utils/utils';
+import { useParams } from 'react-router-dom';
 
 const roles = ['Market', 'Finance', 'Development'];
 const randomRole = () => {
@@ -147,79 +151,169 @@ export default function FullFeaturedCrudGrid() {
     setRowModesModel(newRowModesModel);
   };
 
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 180, editable: true },
-    {
-      field: 'age',
-      headerName: 'Age',
-      type: 'number',
-      width: 80,
-      align: 'left',
-      headerAlign: 'left',
-      editable: true,
-    },
-    {
-      field: 'joinDate',
-      headerName: 'Join date',
-      type: 'date',
+  //sample data of columns fetched from tables/${id}
+//   {
+//     "_id": "67e57f300e8864ea7a4ba6ce",
+//     "name": "testing",
+//     "description": "testing table",
+//     "fields": [
+//         {
+//             "name": "id",
+//             "unique": true,
+//             "type": "TEXT",
+//             "required": true,
+//             "hidden": false,
+//             "options": [],
+//             "_id": "67e57f300e8864ea7a4ba6cf"
+//         },
+//         {
+//             "name": "name",
+//             "unique": false,
+//             "type": "TEXT",
+//             "required": true,
+//             "hidden": false,
+//             "options": [],
+//             "_id": "67e57f300e8864ea7a4ba6d0"
+//         },
+//         {
+//             "name": "dob",
+//             "unique": false,
+//             "type": "DATE",
+//             "required": true,
+//             "hidden": false,
+//             "options": [],
+//             "_id": "67e57f300e8864ea7a4ba6d1"
+//         },
+//         {
+//             "name": "isAdmin",
+//             "unique": false,
+//             "type": "BOOLEAN",
+//             "required": true,
+//             "hidden": false,
+//             "options": [],
+//             "_id": "67e57f300e8864ea7a4ba6d2"
+//         },
+//         {
+//             "name": "mobile",
+//             "unique": true,
+//             "type": "NUMBER",
+//             "required": true,
+//             "hidden": false,
+//             "options": [],
+//             "_id": "67e57f550e8864ea7a4ba6e5"
+//         }
+//     ],
+//     "createdBy": "67e40c9daa260d48edfb0a86",
+//     "sharedWith": [],
+//     "createdAt": "2025-03-27T16:39:12.029Z",
+//     "updatedAt": "2025-03-27T16:39:49.864Z",
+//     "__v": 0
+// }
+
+  //function which takes in tables data and returns columns
+  function getColumns(tables: any) {
+    return tables.fields.map((field: any) => ({
+      field: field.name,
+      headerName: field.name,
       width: 180,
       editable: true,
-    },
-    {
-      field: 'role',
-      headerName: 'Department',
-      width: 220,
-      editable: true,
-      type: 'singleSelect',
-      valueOptions: ['Market', 'Finance', 'Development'],
-    },
-    {
-      field: 'actions',
-      type: 'actions',
-      headerName: 'Actions',
-      width: 100,
-      cellClassName: 'actions',
-      getActions: ({ id }) => {
-        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+      type: field.type == "TEXT" ? "string" : field.type == "NUMBER" ? "number" : field.type == "DATE" ? "date" : field.type == "BOOLEAN" ? "boolean" : "string",
+    }));
+  }
 
-        if (isInEditMode) {
-          return [
-            <GridActionsCellItem
-              icon={<SaveIcon />}
-              label="Save"
-              sx={{
-                color: 'primary.main',
-              }}
-              onClick={handleSaveClick(id)}
-            />,
-            <GridActionsCellItem
-              icon={<CancelIcon />}
-              label="Cancel"
-              className="textPrimary"
-              onClick={handleCancelClick(id)}
-              color="inherit"
-            />,
-          ];
-        }
+  const [tables, setTables] = useState([]);
+  const [fetchedRows, setFetchedRows] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const {id} = useParams()
+  function getTable(){
 
-        return [
-          <GridActionsCellItem
-            icon={<EditIcon />}
-            label="Edit"
-            className="textPrimary"
-            onClick={handleEditClick(id)}
-            color="inherit"
-          />,
-          <GridActionsCellItem
-            icon={<DeleteIcon />}
-            label="Delete"
-            onClick={handleDeleteClick(id)}
-            color="inherit"
-          />,
-        ];
-      },
-    },
-  ];
+    api.get(`/tables/${id}`).then((res) => {
+      console.log(res.data)
+      setTables(res.data);
+      setColumns(getColumns(res.data));
+    });
+    api.get(`/tables/rows/${id}`).then((res) => {
+      console.log(res.data)
+      setFetchedRows(res.data);
+    });
+  }
+  React.useEffect(() => {
+    getTable();
+  }, []);
+
+  // const columns: GridColDef[] = [
+  //   { field: 'name', headerName: 'Name', width: 180, editable: true },
+  //   {
+  //     field: 'age',
+  //     headerName: 'Age',
+  //     type: 'number',
+  //     width: 80,
+  //     align: 'left',
+  //     headerAlign: 'left',
+  //     editable: true,
+  //   },
+  //   {
+  //     field: 'joinDate',
+  //     headerName: 'Join date',
+  //     type: 'date',
+  //     width: 180,
+  //     editable: true,
+  //   },
+  //   {
+  //     field: 'role',
+  //     headerName: 'Department',
+  //     width: 220,
+  //     editable: true,
+  //     type: 'singleSelect',
+  //     valueOptions: ['Market', 'Finance', 'Development'],
+  //   },
+  //   {
+  //     field: 'actions',
+  //     type: 'actions',
+  //     headerName: 'Actions',
+  //     width: 100,
+  //     cellClassName: 'actions',
+  //     getActions: ({ id }) => {
+  //       const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+  //       if (isInEditMode) {
+  //         return [
+  //           <GridActionsCellItem
+  //             icon={<SaveIcon />}
+  //             label="Save"
+  //             sx={{
+  //               color: 'primary.main',
+  //             }}
+  //             onClick={handleSaveClick(id)}
+  //           />,
+  //           <GridActionsCellItem
+  //             icon={<CancelIcon />}
+  //             label="Cancel"
+  //             className="textPrimary"
+  //             onClick={handleCancelClick(id)}
+  //             color="inherit"
+  //           />,
+  //         ];
+  //       }
+
+  //       return [
+  //         <GridActionsCellItem
+  //           icon={<EditIcon />}
+  //           label="Edit"
+  //           className="textPrimary"
+  //           onClick={handleEditClick(id)}
+  //           color="inherit"
+  //         />,
+  //         <GridActionsCellItem
+  //           icon={<DeleteIcon />}
+  //           label="Delete"
+  //           onClick={handleDeleteClick(id)}
+  //           color="inherit"
+  //         />,
+  //       ];
+  //     },
+  //   },
+  // ];
 
   return (
     <Box

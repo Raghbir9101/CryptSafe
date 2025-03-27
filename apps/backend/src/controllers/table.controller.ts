@@ -51,6 +51,15 @@ export default class TableController {
         res.status(200).json(table)
     })
 
+    static getRows = asyncHandler(async (req, res): Promise<any> => {
+        const tableID = req.params.id;
+        if (!tableID) {
+            return res.status(400).json({ message: "Table ID is required" })
+        }
+        const rows = await Data.find({ tableID })
+        res.status(200).json(rows)
+    })
+
     static insertRow = asyncHandler(async (req, res): Promise<any> => {
         const tableID = req.params.tableID;
         const data = req.body;
