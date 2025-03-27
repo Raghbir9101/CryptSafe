@@ -1,7 +1,7 @@
 import { computed, signal } from '@preact/signals-react';
 import { UserInterface } from '@repo/types';
 import { api } from '../../Utils/utils';
-
+import Cookies from "js-cookie"
 
 interface AuthState {
     loggedInUser: UserInterface | null,
@@ -47,3 +47,11 @@ export const getUserAfterRefresh = async () => {
     }
 }
 
+export const logout = async () => {
+    try {
+        Auth.value = { ...Auth.value, loggedInUser: null }
+        Cookies.set('authorization', '')
+    } catch (error) {
+        return error
+    }
+}

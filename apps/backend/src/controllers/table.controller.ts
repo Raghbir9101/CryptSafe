@@ -16,6 +16,11 @@ export default class TableController {
         res.status(200).json(tables)
     })
 
+    static getTableDataWithID = asyncHandler(async (req, res): Promise<void> => {
+        const tables = await Table.findOne({ createdBy: req?.user?._id, _id: req.params.id })
+        res.status(200).json(tables)
+    })
+
     static createTable = asyncHandler(async (req, res): Promise<any> => {
         const { name, fields, description } = req.body
         console.log(req.body, 'req.body');
@@ -24,6 +29,17 @@ export default class TableController {
         }
         const table = await Table.create({ ...req.body, createdBy: req?.user?._id })
         res.status(HttpStatusCodes.CREATED).json({ table, message: "Table created successfully" })
+    })
+
+    static updateTable = asyncHandler(async (req, res): Promise<any> => {
+        const { name, fields, description } = req.body
+
+        if (!name || !fields || !description) {
+            return res.status(400).json({ message: "All fields are required" })
+        }
+
+        const table = await Table.findOneAndUpdate({ createdBy: req?.user?._id, _id: req.params.id }, { name, fields, description })
+        res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
     })
 
     static deleteTable = asyncHandler(async (req, res): Promise<any> => {
@@ -88,6 +104,7 @@ export default class TableController {
         const row = await Data.create({ data, createdBy: req?.user?._id, tableID })
         res.status(200).json({ row, message: "Row inserted successfully" })
     })
+
     static updateRow = asyncHandler(async (req, res): Promise<any> => {
         const tableID = req.params.tableID;
         const rowID = req.params.rowID;

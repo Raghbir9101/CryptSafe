@@ -1,7 +1,9 @@
 import { Router } from "express";
 import TableController from "../controllers/table.controller";
 const tableRouter = Router();
+tableRouter.get("/:id", TableController.getTableDataWithID);
 tableRouter.post("/", TableController.createTable);
+tableRouter.patch("/:id", TableController.updateTable);
 tableRouter.route("/").get(TableController.getAllTableData).delete(TableController.deleteTable)
 tableRouter.post("/insert/:tableID", TableController.insertRow);
 tableRouter.patch("/update/:tableID/:rowID", TableController.updateRow);

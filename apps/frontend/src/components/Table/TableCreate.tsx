@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { createTable } from '../Services/TableService';
+import { FieldInterface } from '@repo/types';
+import { useNavigate } from 'react-router-dom';
 
-interface FieldInterface {
-  name: string;
-  type: string;
-  unique?: boolean;
-  required?: boolean;
-  hidden?: boolean;
-}
 
-const FieldConfigurationForm = () => {
+
+const TablesCreate = () => {
+  const nav = useNavigate();
   const [newField, setNewField] = useState<FieldInterface>({
     name: '',
-    type: '',
+    type: 'TEXT',
     unique: false,
     required: false,
     hidden: false
@@ -27,7 +24,7 @@ const FieldConfigurationForm = () => {
   const handleSubmit = async () => {
     try {
       const res = await createTable({ name: name, fields: fields?.map((field) => ({ ...field, type: field.type.toUpperCase() })), description: description })
-      console.log(res.data, 'res');
+      nav("/tables")
     } catch (error) {
       console.log(error, 'kaddu');
 
@@ -38,7 +35,7 @@ const FieldConfigurationForm = () => {
       setFields([...fields, { ...newField }]);
       setNewField({
         name: '',
-        type: '',
+        type: 'TEXT',
         unique: false,
         required: false,
         hidden: false
@@ -105,7 +102,7 @@ const FieldConfigurationForm = () => {
                 {/* Field Type Select */}
                 <select
                   value={newField.type}
-                  onChange={(e) => setNewField({ ...newField, type: e.target.value })}
+                  onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldInterface['type'] })}
                   className="px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 >
                   <option value="">Select Type</option>
@@ -167,7 +164,7 @@ const FieldConfigurationForm = () => {
                       {/* Field Type Select */}
                       <select
                         value={field.type}
-                        onChange={(e) => handleFieldChange(index, { type: e.target.value })}
+                        onChange={(e) => handleFieldChange(index, { type: e.target.value as FieldInterface['type'] })}
                         className="px-3 py-2 border rounded-md"
                       >
                         <option value="">Select Type</option>
@@ -218,4 +215,4 @@ const FieldConfigurationForm = () => {
   );
 };
 
-export default FieldConfigurationForm;
+export default TablesCreate;
