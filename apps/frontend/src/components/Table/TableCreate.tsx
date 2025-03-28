@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { createTable } from '../Services/TableService';
 import { FieldInterface } from '@repo/types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { api } from '../../Utils/utils';
 
 
 
 const TablesCreate = () => {
   const nav = useNavigate();
+  const { id } = useParams();
   const [newField, setNewField] = useState<FieldInterface>({
     name: '',
     type: 'TEXT',
@@ -51,6 +53,29 @@ const TablesCreate = () => {
     const updatedFields = [...fields];
     updatedFields[index] = { ...updatedFields[index], ...updates };
     setFields(updatedFields);
+  };
+
+  interface NewRowData {
+    [key: string]: any;
+  }
+
+  const handleAddRow = async (newRowData: NewRowData) => {
+    try {
+      const response = await api.post(`/api/table/rows`, {
+        tableID: id,
+        data: newRowData
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add row');
+      }
+
+      const addedRow = await response.json();
+      return addedRow;
+    } catch (error) {
+      console.error('Error adding row:', error);
+      throw error;
+    }
   };
 
   return (
