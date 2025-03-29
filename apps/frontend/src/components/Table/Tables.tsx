@@ -7,13 +7,21 @@ import { Table } from "../Services/TableService"
 import { IconButton } from '@mui/material';
 import { Delete, DeleteIcon, Edit2, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../Utils/utils';
 
 
 
 
 export default function Tables() {
   const nav = useNavigate();
-
+  const handleDelete = async (id: any) => {
+    try {
+      await api.delete(`/tables/${id}`)
+      await getTables();
+    } catch (error) {
+      console.log("error")
+    }
+  }
   const columns: GridColDef<(typeof Table.value.data)[number]>[] = [
     {
       field: 'edit/delete',
@@ -21,7 +29,7 @@ export default function Tables() {
       width: 150,
       renderCell(params) {
         return <Box display={"flex"} gap={"10px"} height={"100%"} alignItems={"center"}>
-          <IconButton>
+          <IconButton onClick={() => handleDelete(params.row._id)}>
             <Trash2 />
           </IconButton>
           <IconButton onClick={() => nav(`/tables/update/${params.row._id}`)}>

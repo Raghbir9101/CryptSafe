@@ -4,6 +4,7 @@ import { createTable } from '../Services/TableService';
 import { FieldInterface } from '@repo/types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../Utils/utils';
+import { Box, Button, Modal, Typography } from '@mui/material';
 
 
 
@@ -15,11 +16,15 @@ const TablesCreate = () => {
     type: 'TEXT',
     unique: false,
     required: false,
-    hidden: false
+    hidden: false,
+    options: []
   });
 
   const [fields, setFields] = useState<FieldInterface[]>([]);
   const [name, setName] = useState('');
+  const [open, setOpen] = useState(false)
+  const [options, setOptions] = useState<string[]>([])
+  const [currentSelectField, setCurrentSelectField] = useState('')
   const [description, setDescription] = useState('');
   // const fieldTypes = ['String', 'Number', 'Boolean', 'Date', 'Object'];
   const fieldTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
@@ -77,7 +82,9 @@ const TablesCreate = () => {
       throw error;
     }
   };
+  const handleOpenModal = () => {
 
+  }
   return (
     <div className='bg-gradient-to-br from-gray-50 to-gray-100 p-8 w-full min-h-screen'>
       <div className="w-full md:w-[60%] mx-auto">
@@ -127,7 +134,11 @@ const TablesCreate = () => {
                 {/* Field Type Select */}
                 <select
                   value={newField.type}
-                  onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldInterface['type'] })}
+                  // onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldInterface['type'] })}
+                  onChange={(e) => {
+                    setCurrentSelectField(e.target.value);
+                    setNewField({ ...newField, type: e.target.value as FieldInterface['type'] });
+                  }}
                   className="px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 >
                   <option value="">Select Type</option>
@@ -135,7 +146,36 @@ const TablesCreate = () => {
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
-
+                {
+                  currentSelectField === "SELECT" || currentSelectField === "MULTISELECT" && (
+                    <Button onClick={() => setOpen(true)} variant='contained'>Add</Button>
+                  )
+                }
+                <Modal
+                  open={open}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-labelledby="modal-modal-title"
+                  aria-describedby="modal-modal-description"
+                >
+                  <Box sx={{ width: "50%", height: "50%", backgroundColor: "white" }}>
+                    <Typography id="modal-modal-title" variant="h6" component="h2">
+                      Add Options <Button variant='contained'>Add</Button>
+                    </Typography>
+                    <div className="relative flex-1">
+                      <input
+                        // value={option}
+                        // onChange={(e) => setOption(e.target.value)}
+                        placeholder="Option"
+                        className="w-full px-4 py-3 border-2 border-transparent bg-gray-100 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-300 ease-in-out"
+                      />
+                      <span className="absolute left-4 -top-2 bg-white px-2 text-xs text-gray-500">Options</span>
+                    </div>
+                  </Box>
+                </Modal>
                 {/* Checkboxes */}
                 <div className="flex items-center space-x-3">
                   {[

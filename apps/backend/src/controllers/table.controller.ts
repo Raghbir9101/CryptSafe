@@ -43,12 +43,11 @@ export default class TableController {
     })
 
     static deleteTable = asyncHandler(async (req, res): Promise<any> => {
-        const { name, fields, description } = req.body
-        if (!name || !fields || !description) {
-            return res.status(400).json({ message: "All fields are required" })
+        if (!req.params.id) {
+            return res.status(400).json({ message: "Table id is required" })
         }
-        const table = await Table.create(req.body)
-        res.status(200).json(table)
+        const result = await Table.deleteOne({ _id: req.params.id })
+        res.status(200).json(result)
     })
 
     static getRows = asyncHandler(async (req, res): Promise<any> => {
