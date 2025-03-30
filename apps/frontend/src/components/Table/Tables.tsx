@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { getTables } from '../Services/TableService';
 import { Table } from "../Services/TableService"
 import { IconButton } from '@mui/material';
-import { Delete, DeleteIcon, Edit2, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../Utils/utils';
 

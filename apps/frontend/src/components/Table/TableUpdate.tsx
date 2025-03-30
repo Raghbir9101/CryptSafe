@@ -1,228 +1,394 @@
-import { use, useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { createTable, updateTable } from '../Services/TableService';
-import { FieldInterface, TableInterface } from '@repo/types';
-import { api } from '../../Utils/utils';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm, useFieldArray } from "react-hook-form"
+import { Plus, Save, Trash2 } from "lucide-react"
+import * as z from "zod"
 
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 
+import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
+// import { toast } from "@/components/ui/use-toast"
+import { useNavigate, useParams } from "react-router-dom"
+import { Label } from "../ui/label"
+import { toast } from "sonner"
+import { createTable, updateTable } from "../Services/TableService"
+import { api } from "@/Utils/utils"
+import { TableInterface } from "@repo/types"
 
-const TablesUpdate = () => {
-  const nav = useNavigate();
+// Define the field types
+const fieldTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"] as const
+
+// Define the schema for the form
+const formSchema = z.object({
+  name: z.string().min(1, "Table name is required"),
+  description: z.string().optional(),
+  fields: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Field name is required"),
+        type: z.enum(fieldTypes),
+        unique: z.boolean().default(false),
+        required: z.boolean().default(false),
+        hidden: z.boolean().default(false),
+        options: z.string().optional(),
+      }),
+    )
+    .min(1, "At least one field is required"),
+})
+
+type FormValues = z.infer<typeof formSchema>
+
+export default function TableUpdate() {
   const { id } = useParams();
-  const [newField, setNewField] = useState<FieldInterface>({
-    name: '',
-    type: 'TEXT',
-    unique: false,
-    required: false,
-    hidden: false
-  });
+  const router = useNavigate()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [fields, setFields] = useState<FieldInterface[]>([]);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  // const fieldTypes = ['String', 'Number', 'Boolean', 'Date', 'Object'];
-  const fieldTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
-  const handleSubmit = async () => {
+  // Initialize the form
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      fields: [
+        {
+          name: "",
+          type: "TEXT",
+          unique: false,
+          required: false,
+          hidden: false,
+        },
+      ],
+    },
+  })
+
+  // Get the fields from the form
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "fields",
+  })
+
+  // Add a new field
+  const addField = () => {
+    append({
+      name: "",
+      type: "TEXT",
+      unique: false,
+      required: false,
+      hidden: false,
+    })
+  }
+
+  // Handle form submission
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true)
+
     try {
-      const res = await updateTable(id, { name: name, fields: fields?.map((field) => ({ ...field, type: field.type.toUpperCase() })), description: description })
-      nav("/tables")
-    } catch (error) {
-      console.log(error, 'kaddu');
+      // Here you would typically send the data to your API
+      console.log("Table data:", {
+        ...data,
+      })
 
+      const postData = {
+        name: data.name,
+        description: data.description,
+        fields: data.fields.map(item => {
+          return {
+            ...item,
+            options: item.options.split(",").filter(Boolean)
+          }
+        })
+      }
+
+      const res = await updateTable(id, postData)
+      if (res.status == "error") {
+        return toast(`Error creating table`, {
+          description: `There was an error creating your table. Please try again.`,
+        })
+      }
+
+
+      toast(`Table updated successfully`, {
+        description: `Table "${data.name}" has been created.`,
+      })
+
+      router("/tables")
+
+    } catch (error) {
+      console.error("Error creating table:", error)
+      toast(`Error updating table`, {
+        description: `There was an error creating your table. Please try again.`,
+      })
+
+    } finally {
+      setIsSubmitting(false)
     }
   }
-  const handleAddField = () => {
-    if (newField.name && newField.type) {
-      setFields([...fields, { ...newField }]);
-      setNewField({
-        name: '',
-        type: 'TEXT',
-        unique: false,
-        required: false,
-        hidden: false
-      });
-    }
-  };
-
-  const handleRemoveField = (indexToRemove: number) => {
-    setFields(fields.filter((_, index) => index !== indexToRemove));
-  };
-
-  const handleFieldChange = (index: number, updates: Partial<FieldInterface>) => {
-    const updatedFields = [...fields];
-    updatedFields[index] = { ...updatedFields[index], ...updates };
-    setFields(updatedFields);
-  };
 
   useEffect(() => {
     api.get<TableInterface>(`/tables/${id}`).then((res) => {
-      setName(res.data.name);
-      setDescription(res.data.description);
-      setFields(res.data.fields);
+      form.setValue("name", res.data.name ?? "")
+      form.setValue("description", res.data.description ?? "")
+      form.setValue("fields", (res.data.fields || []).map(item => {
+        return {
+          ...item,
+          options: ((item.options || []).join(","))
+        }
+      }))
     });
   }, [])
 
   return (
-    <div className='bg-gradient-to-br from-gray-50 to-gray-100 p-8 w-full min-h-screen'>
-      <div className="w-full md:w-[60%] mx-auto">
-        <div className="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-200">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
-            <h1 className="text-3xl font-bold text-white tracking-wide">Field Configuration</h1>
-          </div>
-
-          {/* Content Container */}
-          <div className="p-8 space-y-8">
-            {/* Table Name and Description Section */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative flex-1">
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Table Name"
-                  className="w-full px-4 py-3 border-2 border-transparent bg-gray-100 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-300 ease-in-out"
+    <div className="container py-10">
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create New Table</CardTitle>
+          <CardDescription>
+            Define the structure of your table by adding fields and setting their properties.
+          </CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
+              {/* Table Basic Information */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Table Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter table name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <span className="absolute left-4 -top-2 bg-white px-2 text-xs text-gray-500">Table Name</span>
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter a description for this table" className="resize-none" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Optional description to help users understand the purpose of this table.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <div className="relative flex-1">
-                <input
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Description"
-                  className="w-full px-4 py-3 border-2 border-transparent bg-gray-100 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-300 ease-in-out"
-                />
-                <span className="absolute left-4 -top-2 bg-white px-2 text-xs text-gray-500">Description</span>
-              </div>
-            </div>
+              <Separator />
 
-            {/* Add Fields Section */}
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-              <h2 className="text-xl font-semibold mb-4 text-gray-700">Add New Field</h2>
-              <div className="flex items-center space-x-4">
-                {/* Field Name Input */}
-                <input
-                  placeholder="Field Name"
-                  value={newField.name}
-                  onChange={(e) => setNewField({ ...newField, name: e.target.value })}
-                  className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                />
-
-                {/* Field Type Select */}
-                <select
-                  value={newField.type}
-                  onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldInterface['type'] })}
-                  className="px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                >
-                  <option value="">Select Type</option>
-                  {fieldTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-
-                {/* Checkboxes */}
-                <div className="flex items-center space-x-3">
-                  {[
-                    { label: 'Unique', key: 'unique', color: 'blue' },
-                    { label: 'Required', key: 'required', color: 'green' },
-                    { label: 'Hidden', key: 'hidden', color: 'red' }
-                  ].map(({ label, key, color }) => (
-                    <label key={key} className="flex items-center space-x-2 cursor-pointer border-1 border-gray-300 rounded-md px-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={newField[key as keyof FieldInterface] as boolean || false}
-                        onChange={(e) => setNewField({
-                          ...newField,
-                          [key]: e.target.checked
-                        })}
-                        className={`form-checkbox h-5 w-5 rounded-md text-${color}-600 focus:ring-${color}-500`}
-                      />
-                      <span className="text-gray-700">{label}</span>
-                    </label>
-                  ))}
+              {/* Fields Section */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Fields</h3>
+                  <Button type="button" variant="outline" size="sm" onClick={addField} className=" flex items-center " >
+                    <Plus className="h-3 w-3" />
+                    <Label className="relative top-[-0.5px]">Add Field</Label>
+                  </Button>
                 </div>
 
-                {/* Add Field Button */}
-                <button
-                  onClick={handleAddField}
-                  className="cursor-pointer px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  Add Field
-                </button>
-              </div>
-            </div>
-
-            {/* Fields List Section */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4 text-gray-700">Fields List</h2>
-              <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <div
-                    key={index}
-                    className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-md transition-shadow duration-300"
-                  >
-                    <div className="flex items-center space-x-4 flex-1">
-                      {/* Field Name Input */}
-                      <input
-                        value={field.name}
-                        onChange={(e) => handleFieldChange(index, { name: e.target.value })}
-                        placeholder="Field Name"
-                        className="flex-1 px-3 py-2 border rounded-md"
-                      />
-
-                      {/* Field Type Select */}
-                      <select
-                        value={field.type}
-                        onChange={(e) => handleFieldChange(index, { type: e.target.value as FieldInterface['type'] })}
-                        className="px-3 py-2 border rounded-md"
-                      >
-                        <option value="">Select Type</option>
-                        {fieldTypes.map((type) => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-
-                      {/* Checkboxes */}
-                      <div className="flex items-center space-x-3">
-                        {[
-                          { label: 'Unique', key: 'unique', color: 'blue' },
-                          { label: 'Required', key: 'required', color: 'green' },
-                          { label: 'Hidden', key: 'hidden', color: 'red' }
-                        ].map(({ label, key, color }) => (
-                          <label key={key} className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={field[key as keyof FieldInterface] as boolean || false}
-                              onChange={(e) => handleFieldChange(index, {
-                                [key]: e.target.checked
-                              })}
-                              className={`form-checkbox h-4 w-4 rounded-md text-${color}-600 focus:ring-${color}-500`}
-                            />
-                            <span className="text-gray-700 text-sm">{label}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      {/* Remove Field Button */}
-                      <button
-                        onClick={() => handleRemoveField(index)}
-                        className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
+                {fields.length === 0 ? (
+                  <div className="text-center p-4 border border-dashed rounded-md">
+                    <p className="text-muted-foreground">No fields added yet. Click "Add Field" to start.</p>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-6">
+                    {fields.map((field, index) => (
+                      <Card key={field.id} className="relative">
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-base">Field {index + 1}</CardTitle>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove(index)}
+                              className="h-8 w-8 absolute top-2 right-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Remove field</span>
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4 pt-0">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name={`fields.${index}.name`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Field Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Enter field name" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`fields.${index}.type`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Field Type</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select field type" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {fieldTypes.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                          {type}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                              control={form.control}
+                              name={`fields.${index}.unique`}
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Unique</FormLabel>
+                                    <FormDescription>Values must be unique</FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`fields.${index}.required`}
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Required</FormLabel>
+                                    <FormDescription>Field cannot be empty</FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`fields.${index}.hidden`}
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Hidden</FormLabel>
+                                    <FormDescription>Hide from default view</FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Options for SELECT and MULTISELECT types */}
+                          {(form.watch(`fields.${index}.type`) === "SELECT" ||
+                            form.watch(`fields.${index}.type`) === "MULTISELECT") && (
+                              <FormField
+                                control={form.control}
+                                name={`fields.${index}.options`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Options</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Enter options, comma seperated "
+                                        className="resize-none"
+                                        value={field.value}
+                                        onChange={(e) => {
+                                          const options = e.target.value
+                                          field.onChange(options)
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormDescription>Enter each option on a new line</FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-
-            <button onClick={handleSubmit} className='cursor-pointer px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg'>Submit</button>
-          </div>
-        </div>
-      </div>
+            </CardContent>
+            <CardFooter className="flex justify-between mt-5">
+              <Button variant="outline" type="button" onClick={() => router(-1)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Creating...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <Save className="mr-2 h-4 w-4" />
+                    Update Table
+                  </span>
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
     </div>
-  );
-};
-
-export default TablesUpdate;
+  )
+}
