@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { HttpStatusCodes } from "../utils/errorCodes";
 import Table from "../models/table.model";
 import Data from "../models/data.model";
+import { TableInterface } from "@repo/types";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
@@ -39,6 +40,30 @@ export default class TableController {
         }
 
         const table = await Table.findOneAndUpdate({ createdBy: req?.user?._id, _id: req.params.id }, { name, fields, description })
+        res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
+    })
+
+    static shareTable = asyncHandler(async (req, res): Promise<any> => {
+        const id = req.params.id;
+        const { sharedWith }: { sharedWith: TableInterface["sharedWith"][0] } = req.body
+
+        const table = await Table.findOne({ createdBy: req.user._id, _id: id });
+
+        const isTableAleadyShared = table.sharedWith.findIndex(item => item.email == sharedWith.email);
+
+        if (isTableAleadyShared == -1) {
+            table.sharedWith.push(sharedWith)
+        }
+        else {
+            console.log(sharedWith)
+            table.sharedWith = table.sharedWith.map(item => {
+                if (item.email === sharedWith.email) return sharedWith;
+                return item;
+            })
+        }
+
+        await table.save()
+
         res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
     })
 
@@ -82,8 +107,8 @@ export default class TableController {
                     [`data.${field.name}`]: data[field.name]
                 });
                 if (existingRow) {
-                    return res.status(400).json({ 
-                        message: `${field.name} must be unique. Value "${data[field.name]}" already exists.` 
+                    return res.status(400).json({
+                        message: `${field.name} must be unique. Value "${data[field.name]}" already exists.`
                     });
                 }
             }
@@ -149,8 +174,8 @@ export default class TableController {
                     [`data.${field.name}`]: data[field.name]
                 });
                 if (existingRow) {
-                    return res.status(400).json({ 
-                        message: `${field.name} must be unique. Value "${data[field.name]}" already exists.` 
+                    return res.status(400).json({
+                        message: `${field.name} must be unique. Value "${data[field.name]}" already exists.`
                     });
                 }
             }
@@ -187,8 +212,8 @@ export default class TableController {
 
         const row = await Data.findByIdAndUpdate(
             rowID,
-            { 
-                $set: { 
+            {
+                $set: {
                     data,
                     updatedBy: req?.user?._id,
                     updatedAt: new Date()

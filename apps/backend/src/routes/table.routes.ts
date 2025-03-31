@@ -5,6 +5,7 @@ tableRouter.get("/:id", TableController.getTableDataWithID);
 tableRouter.get("/rows/:id", TableController.getRows);
 tableRouter.post("/", TableController.createTable);
 tableRouter.patch("/:id", TableController.updateTable);
+tableRouter.patch("/share/:id", TableController.shareTable);
 tableRouter.route("/").get(TableController.getAllTableData)
 tableRouter.post("/insert/:tableID", TableController.insertRow);
 tableRouter.patch("/update/:tableID/:rowID", TableController.updateRow);

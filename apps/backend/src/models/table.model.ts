@@ -27,6 +27,7 @@ const tableSchema: Schema = new Schema({
         type: [{
           fieldName: { type: String, },
           permission: { type: String, enum: ["READ", "WRITE"] },
+          filter: { type: Array, default: [] }
         }],
       },
       isBlocked: { type: Boolean, default: false },

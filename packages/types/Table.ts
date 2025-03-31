@@ -19,13 +19,14 @@ export interface FieldInterface {
     options?: string[];
 }
 
-interface SharedWithInterface {
+export interface SharedWithInterface {
     email: string;
     fieldPermission: FieldPermissionInterface[];
     isBlocked: boolean;
 }
 
-interface FieldPermissionInterface {
+export interface FieldPermissionInterface {
     fieldName: string;
     permission: string;
+    filter: string[]
 }

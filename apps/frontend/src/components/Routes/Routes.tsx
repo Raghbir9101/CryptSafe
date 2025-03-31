@@ -27,7 +27,7 @@ export default function AllRoutes() {
             <Route path='/tables' element={<ProtectedRoute><Tables /></ProtectedRoute>} />
             <Route path='/tables/create' element={<ProtectedRoute><TableCreate /></ProtectedRoute>} />
             <Route path='/tables/:id' element={<ProtectedRoute><TableContent /></ProtectedRoute>} />
-            <Route path='/tables/share/:id' element={<ProtectedRoute><TableShare /></ProtectedRoute>} />
+            <Route path='/tables/share/:tableId' element={<ProtectedRoute><TableShare /></ProtectedRoute>} />
             <Route path='/tables/update/:id' element={<ProtectedRoute><TableUpdate /></ProtectedRoute>} />
 
             <Route path='/users' element={<ProtectedRoute><Users /></ProtectedRoute>} />
