@@ -108,7 +108,7 @@ export default function SharePage() {
         <CardContent>
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium">Shared Users</h3>
-            <Button onClick={() => setIsModalOpen(true)}>Share with User</Button>
+            <Button className="cursor-pointer" onClick={() => setIsModalOpen(true)}>Share with User</Button>
           </div>
 
           <SharedUsersList
