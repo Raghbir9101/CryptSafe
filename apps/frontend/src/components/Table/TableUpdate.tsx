@@ -100,7 +100,7 @@ export default function TableUpdate() {
         fields: data.fields.map(item => {
           return {
             ...item,
-            options: item.options.split(",").filter(Boolean)
+            options: (item.options || "").split(",").filter(Boolean)
           }
         })
       }
