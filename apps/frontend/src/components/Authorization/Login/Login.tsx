@@ -159,7 +159,7 @@ export default function SignIn() {
               variant="contained"
               onClick={validateInputs}
             >
-              Sign up
+              Sign In
             </Button>
           </Box>
           <Divider>

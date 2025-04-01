@@ -97,7 +97,7 @@ export default function TableCreate() {
         fields: data.fields.map(item => {
           return {
             ...item,
-            options: item.options.split(",").filter(Boolean)
+            options: (item.options || "").split(",").filter(Boolean)
           }
         })
       }

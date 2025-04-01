@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getTables } from '../Services/TableService';
+import { getTables, SelectedTable } from '../Services/TableService';
 import { Table } from "../Services/TableService"
 import { ExternalLink, Pencil, ShareIcon, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Auth } from '../Services/AuthService';
 
 export default function Tables() {
   const nav = useNavigate();
@@ -24,7 +25,6 @@ export default function Tables() {
       console.log("error")
     }
   }
-
   useEffect(() => {
     getTables()
   }, [])
@@ -44,59 +44,65 @@ export default function Tables() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Table.value.data?.map((table) => (
-            <TableRow key={table._id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className='cursor-pointer'
-                    onClick={() => nav(`/tables/share/${table._id}`)}
-                  >
-                    <ShareIcon className="h-4 w-4 " />
-                  </Button>
-                  <Button
-                    className="cursor-pointer"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(table._id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    className="cursor-pointer"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => nav(`/tables/update/${table._id}`)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-              <TableCell>
+          {Table.value.data?.map((table) => {
+            return <TableRow key={table._id}>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className='cursor-pointer'
+                  onClick={() => nav(`/tables/share/${table._id}`)}
+                  disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                >
+                  <ShareIcon className="h-4 w-4 " />
+                </Button>
                 <Button
                   className="cursor-pointer"
                   variant="ghost"
                   size="icon"
-                  onClick={() => nav(`/tables/${table._id}`)}
+                  onClick={() => handleDelete(table._id)}
+                  disabled={Auth.value.loggedInUser?._id !== table.createdBy}
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-              </TableCell>
-              <TableCell>{table.name}</TableCell>
-              <TableCell>{table.description}</TableCell>
-              <TableCell>
-                {new Date(table.updatedBy).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                {new Date(table.createdAt).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                {new Date(table.updatedAt).toLocaleString()}
-              </TableCell>
-            </TableRow>
-          ))}
+                <Button
+                  className="cursor-pointer"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => nav(`/tables/update/${table._id}`)}
+                  disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            </TableCell>
+            <TableCell>
+              <Button
+                className="cursor-pointer"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  SelectedTable.value = table
+                  nav(`/tables/${table._id}`)
+                }}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </TableCell>
+            <TableCell>{table.name}</TableCell>
+            <TableCell>{table.description}</TableCell>
+            <TableCell>
+              {new Date(table.updatedBy).toLocaleString()}
+            </TableCell>
+            <TableCell>
+              {new Date(table.createdAt).toLocaleString()}
+            </TableCell>
+            <TableCell>
+              {new Date(table.updatedAt).toLocaleString()}
+            </TableCell>
+          </TableRow>
+          })}
         </TableBody>
       </TableComponent>
     </div>

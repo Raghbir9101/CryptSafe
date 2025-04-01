@@ -21,7 +21,7 @@ export const login = async (email: string, password: string) => {
     Auth.value = { ...Auth.value, status: 'loading' }
     try {
         const response = await api.post('/auth/login', { email, password }, { withCredentials: true });
-        Auth.value = { ...Auth.value, loggedInUser: response.data, status: 'success' }
+        Auth.value = { ...Auth.value, loggedInUser: response.data.user, status: 'success' }
         return response.data
     } catch (error) {
         Auth.value = { ...Auth.value, status: 'error' }

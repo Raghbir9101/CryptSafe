@@ -13,6 +13,8 @@ export const Table = signal<TableState>({
     data: null
 })
 
+export const SelectedTable = signal<TableInterface | null>(null)
+
 export const getTables = async () => {
     Table.value = { ...Table.value, status: 'loading' }
     try {
@@ -29,7 +31,7 @@ export const createTable = async (tableData: { name: string, fields: any, descri
     Table.value = { ...Table.value, status: 'loading' }
     try {
         const response = await api.post('/tables', tableData, { withCredentials: true });
-        Table.value = { ...Table.value, data: response.data, status: 'success' }
+        Table.value = { ...Table.value, data: [...Table.value.data,response.data], status: 'success' }
         return response.data
     } catch (error) {
         Table.value = { ...Table.value, status: 'error' }
@@ -41,7 +43,7 @@ export const updateTable = async (id: string, tableData: { name: string, fields:
     Table.value = { ...Table.value, status: 'loading' }
     try {
         const response = await api.patch(`/tables/${id}`, tableData, { withCredentials: true });
-        Table.value = { ...Table.value, data: response.data, status: 'success' }
+        Table.value = { ...Table.value, data: Table.value.data?.map(table => table._id === id ? response.data : table), status: 'success' }
         return response.data;
     } catch (error) {
         Table.value = { ...Table.value, status: 'error' }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../Utils/utils';
@@ -31,6 +30,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SelectedTable } from '../Services/TableService';
+import { Auth } from '../Services/AuthService';
 
 interface TableField {
   name: string;
@@ -53,6 +54,7 @@ type SortConfig = {
 };
 
 export default function TableContent() {
+  console.log(SelectedTable.value)
   const [tableFields, setTableFields] = useState<TableField[]>([]);
   const [rows, setRows] = useState<TableRow[]>([]);
   const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export default function TableContent() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: '', direction: null });
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [tableData, setTableData] = useState<any>(null);
   const { id } = useParams();
 
   useEffect(() => {
@@ -72,8 +75,8 @@ export default function TableContent() {
         api.get(`/tables/${id}`),
         api.get(`/tables/rows/${id}`)
       ]);
-
       setTableFields(tableRes.data.fields);
+      setTableData(tableRes.data);
       setRows(rowsRes.data);
 
       // Initialize newRow with empty values for each field
@@ -86,6 +89,35 @@ export default function TableContent() {
       console.error('Error fetching table data:', error);
       toast.error('Failed to load table data');
     }
+  };
+
+  const isOwner = tableData?.createdBy === Auth.value.loggedInUser?._id;
+  const sharedUser = tableData?.sharedWith?.find((user: any) => user.email === Auth.value.loggedInUser?.email);
+  const fieldPermissions = sharedUser?.fieldPermission || [];
+
+  const hasWritePermission = (fieldName: string) => {
+    if (isOwner) return true;
+    if (!sharedUser) return false;
+    
+    const fieldPermission = fieldPermissions.find((fp: any) => fp.fieldName === fieldName);
+    return fieldPermission?.permission === 'WRITE';
+  };
+
+  const hasAnyWritePermission = () => {
+    if (isOwner) return true;
+    if (!sharedUser) return false;
+    return fieldPermissions.some((fp: any) => fp.permission === 'WRITE');
+  };
+
+  const canAddRow = () => {
+    if (isOwner) return true;
+    if (!sharedUser) return false;
+
+    // Get all required fields
+    const requiredFields = tableFields.filter(field => field.required);
+    
+    // Check if user has write permission for all required fields
+    return requiredFields.every(field => hasWritePermission(field.name));
   };
 
   const handleEdit = (rowId: string) => {
@@ -367,43 +399,51 @@ export default function TableContent() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Table Content</h2>
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Row
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New Row</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              {tableFields.map((field) => (
-                <div key={field.name} className="grid gap-2">
-                  <Label htmlFor={field.name}>
-                    {field.name}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </Label>
-                  {field.description && (
-                    <p className="text-sm text-muted-foreground">{field.description}</p>
-                  )}
-                  {renderInputField(field, newRow[field.name], (value) =>
-                    handleInputChange(null, field.name, value)
-                  )}
+        {canAddRow() && (
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Row
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Row</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                {tableFields.map((field) => (
+                  <div key={field.name} className="grid gap-2">
+                    <Label htmlFor={field.name}>
+                      {field.name}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
+                    {field.description && (
+                      <p className="text-sm text-muted-foreground">{field.description}</p>
+                    )}
+                    {hasWritePermission(field.name) ? (
+                      renderInputField(field, newRow[field.name], (value) =>
+                        handleInputChange(null, field.name, value)
+                      )
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        You don't have permission to edit this field
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddRow}>
+                    Add Row
+                  </Button>
                 </div>
-              ))}
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddRow}>
-                  Add Row
-                </Button>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="rounded-md border">
@@ -449,7 +489,7 @@ export default function TableContent() {
                   </div>
                 </TableHead>
               ))}
-              <TableHead className="w-[100px]">Actions</TableHead>
+              {hasAnyWritePermission() && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -457,7 +497,7 @@ export default function TableContent() {
               <TableRow key={row._id}>
                 {tableFields.map((field) => (
                   <TableCell key={field.name} className="max-w-[250px]">
-                    {editingRow === row._id ? (
+                    {editingRow === row._id && hasWritePermission(field.name) ? (
                       renderInputField(
                         field,
                         row.data[field.name],
@@ -470,47 +510,47 @@ export default function TableContent() {
                     )}
                   </TableCell>
                 ))}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {editingRow === row._id ? (
-                      <>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleSave(row._id)}
-                        >
-                          <Save className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleCancel}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(row._id)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(row._id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </TableCell>
+                {hasAnyWritePermission() && (
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {editingRow === row._id ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleSave(row._id)}
+                          >
+                            <Save className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleCancel}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(row._id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(row._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
