@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import { Plus, Save, Trash2 } from "lucide-react"
 import * as z from "zod"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -84,7 +83,6 @@ export default function TableCreate() {
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
-
     try {
       // Here you would typically send the data to your API
       console.log("Table data:", {
@@ -155,7 +153,6 @@ export default function TableCreate() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="description"

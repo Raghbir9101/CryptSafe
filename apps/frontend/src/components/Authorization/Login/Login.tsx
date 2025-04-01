@@ -4,15 +4,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { login } from '../../Services/AuthService';
-import { NavLink } from 'react-router-dom';
+import { login, loginWithGoogle } from '@/components/Services/AuthService';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { SitemarkIcon } from '../../Icons/Icons';
+import { api } from '@/Utils/utils';
 
 export default function SignIn() {
+  const navigate = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const validateInputs = () => {
     const email: any = document.getElementById('email');
@@ -46,9 +49,87 @@ export default function SignIn() {
     if (emailError || passwordError) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    const response = await login(data.get('email') as string, data.get('password') as string);
-    console.log(response);
+    setIsLoading(true);
+    try {
+      const data = new FormData(event.currentTarget);
+      const response = await login(data.get('email') as string, data.get('password') as string);
+      if (response.success) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/auth/google/url');
+      const { authUrl } = response.data;
+
+      // Open Google OAuth popup
+      const popup = window.open(
+        authUrl,
+        'Google Login',
+        'width=600,height=700,scrollbars=yes'
+      );
+
+      if (!popup) {
+        throw new Error('Popup blocked by browser');
+      }
+
+      // Listen for the OAuth callback
+      const checkPopup = setInterval(async () => {
+        try {
+          if (!popup || popup.closed) {
+            clearInterval(checkPopup);
+            setIsLoading(false);
+            return;
+          }
+
+          const currentUrl = popup.location.href;
+
+          // Only process if we're at the callback URL
+          if (currentUrl && currentUrl.includes('/auth/google/callback')) {
+            const urlParams = new URLSearchParams(new URL(currentUrl).search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            if (error) {
+              console.error('Google OAuth error:', error);
+              popup.close();
+              clearInterval(checkPopup);
+              setIsLoading(false);
+              return;
+            }
+
+            if (code) {
+              // Close popup before making the API call to avoid cross-origin issues
+              popup.close();
+              clearInterval(checkPopup);
+
+              // Handle the code
+              const response = await api.post('/auth/google/callback', { code });
+              if (response.data.success) {
+                localStorage.setItem('token', response.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                navigate('/tables');
+              }
+            }
+          }
+        } catch (error) {
+          // Ignore cross-origin errors while checking popup URL
+          if (!error.toString().includes('cross-origin')) {
+            console.error('Error checking popup:', error);
+          }
+        }
+      }, 500);
+    } catch (error) {
+      console.error('Google login failed:', error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -70,6 +151,7 @@ export default function SignIn() {
                 type="email"
                 placeholder="your@email.com"
                 className={emailError ? "border-destructive" : ""}
+                disabled={isLoading}
               />
               {emailError && (
                 <p className="text-sm text-destructive">{emailErrorMessage}</p>
@@ -83,6 +165,7 @@ export default function SignIn() {
                 type="password"
                 placeholder="••••••"
                 className={passwordError ? "border-destructive" : ""}
+                disabled={isLoading}
               />
               {passwordError && (
                 <p className="text-sm text-destructive">{passwordErrorMessage}</p>
@@ -92,8 +175,9 @@ export default function SignIn() {
               type="submit"
               className="w-full"
               onClick={validateInputs}
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
           <div className="relative my-6">
@@ -110,7 +194,8 @@ export default function SignIn() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => alert('Sign up with Google')}
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -130,7 +215,7 @@ export default function SignIn() {
                   fill="#EA4335"
                 />
               </svg>
-              Sign in with Google
+              {isLoading ? 'Signing in...' : 'Sign in with Google'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}

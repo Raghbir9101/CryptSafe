@@ -68,6 +68,7 @@ export default function Register() {
     nav("/login")
   };
 
+  
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-[450px]">
