@@ -93,13 +93,13 @@ export default function Tables() {
             <TableCell>{table.name}</TableCell>
             <TableCell>{table.description}</TableCell>
             <TableCell>
-              {new Date(table.updatedBy).toLocaleString()}
+              {new Date(table.updatedAt).toLocaleString()}
             </TableCell>
             <TableCell>
               {new Date(table.createdAt).toLocaleString()}
             </TableCell>
-            <TableCell>
-              {new Date(table.updatedAt).toLocaleString()}
+            <TableCell className='text-center'>
+              {table.updatedBy || "-"}
             </TableCell>
           </TableRow>
           })}

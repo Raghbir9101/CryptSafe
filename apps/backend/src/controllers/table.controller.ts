@@ -49,7 +49,7 @@ export default class TableController {
             return res.status(400).json({ message: "All fields are required" })
         }
 
-        const table = await Table.findOneAndUpdate({ createdBy: req?.user?._id, _id: req.params.id }, { name, fields, description })
+        const table = await Table.findOneAndUpdate({ createdBy: req?.user?._id, _id: req.params.id }, { name, fields, description, updatedBy: req?.user?._id })
         res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
     })
 

@@ -36,6 +36,10 @@ const tableSchema: Schema = new Schema({
   createdBy: {
     type: Types.ObjectId,
     ref: "user"
+  },
+  editedBy: {
+    type: Types.ObjectId,
+    ref: "user"
   }
 }, { timestamps: true });
 
