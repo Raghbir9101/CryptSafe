@@ -7,7 +7,7 @@ export interface TableInterface {
     createdBy: string;
     createdAt: string;
     updatedBy: string;
-    updatedAt: string;
+    updatedAt: object | string;
 }
 
 export interface FieldInterface {

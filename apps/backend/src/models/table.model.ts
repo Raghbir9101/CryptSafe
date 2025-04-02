@@ -37,10 +37,10 @@ const tableSchema: Schema = new Schema({
     type: Types.ObjectId,
     ref: "user"
   },
-  editedBy: {
+  updatedBy: {
     type: Types.ObjectId,
     ref: "user"
-  }
+  },
 }, { timestamps: true });
 
 const Table = mongoose.model<TableInterface & Document>("table", tableSchema);

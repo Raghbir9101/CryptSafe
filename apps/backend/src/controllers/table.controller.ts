@@ -13,12 +13,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 export default class TableController {
 
     static getAllTableData = asyncHandler(async (req, res): Promise<void> => {
+        //populate the updatedBy field and just give the name of the user, the result will be an array of objects overall, so it should populate each object with the name of the user
         const tables = await Table.find({
             $or: [
                 { createdBy: req?.user?._id },
                 { "sharedWith.email": req?.user?.email }
             ]
-        })
+        }).populate("updatedBy")
         res.status(200).json(tables)
     })
 
@@ -28,7 +29,7 @@ export default class TableController {
                 { createdBy: req?.user?._id, _id: req.params.id },
                 { "sharedWith.email": req?.user?.email, _id: req.params.id }
             ]
-        })
+        }).populate("updatedBy")
         res.status(200).json(tables)
     })
 
@@ -48,8 +49,10 @@ export default class TableController {
         if (!name || !fields || !description) {
             return res.status(400).json({ message: "All fields are required" })
         }
-
+        
         const table = await Table.findOneAndUpdate({ createdBy: req?.user?._id, _id: req.params.id }, { name, fields, description, updatedBy: req?.user?._id })
+        console.log(req.user)
+        console.log(table)
         res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
     })
 
@@ -231,10 +234,15 @@ export default class TableController {
             },
             { new: true }
         );
-
+        
+        //update the table with the updatedBy using the tableId
+        
         if (!row) {
             return res.status(404).json({ message: "Row not found" })
         }
+        let check =await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id })
+        console.log(check)
+        console.log(req?.user?._id)
 
         res.status(200).json({ row, message: "Row updated successfully" })
     })

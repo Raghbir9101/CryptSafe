@@ -37,7 +37,7 @@ export default class AuthController {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
-        const newUser = new User({ email, userName, password: hashedPassword });
+        const newUser = new User({ email, name:userName, password: hashedPassword });
         await newUser.save();
 
         res.status(HttpStatusCodes.CREATED).json({ message: 'User registered successfully' });
@@ -130,9 +130,8 @@ export default class AuthController {
                 // Create new user if doesn't exist
                 user = await User.create({
                     email: googleUser.email,
-                    userName: googleUser.name,
-                    password: '',
                     name: googleUser.name,
+                    password: '',
                     isGoogleUser: true
                 });
             }

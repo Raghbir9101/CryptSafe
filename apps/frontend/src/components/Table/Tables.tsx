@@ -99,7 +99,7 @@ export default function Tables() {
               {new Date(table.createdAt).toLocaleString()}
             </TableCell>
             <TableCell className='text-center'>
-              {table.updatedBy || "-"}
+              {table?.updatedBy?.name || "-"}
             </TableCell>
           </TableRow>
           })}
