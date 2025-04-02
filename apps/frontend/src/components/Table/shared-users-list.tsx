@@ -18,6 +18,9 @@ interface SharedUsersListProps {
   onRemove: (email: string) => void
 }
 
+
+
+
 export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemove }: SharedUsersListProps) {
   const [editingUser, setEditingUser] = useState<SharedWithInterface | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -26,7 +29,17 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
 
   const handleEditUser = (user: SharedWithInterface) => {
     setEditingUser(user)
-    setFieldPermissions([...user.fieldPermission])
+    // setFieldPermissions([...user.fieldPermission])
+    setFieldPermissions(fields.map((field) => {
+      const fieldPermission = user.fieldPermission.find((fp) => {
+        return fp.fieldName === field.name
+      })
+      return fieldPermission ? fieldPermission : {
+        fieldName: field.name,
+        filter: [],
+        permission: "READ"
+      }
+    }))
 
     // Convert filter arrays to comma-separated strings for editing
     const initialFilterInputs: Record<string, string> = {}
@@ -39,7 +52,13 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
   }
 
   const handlePermissionChange = (fieldName: string, permission: "READ" | "WRITE") => {
-    setFieldPermissions(fieldPermissions.map((fp) => (fp.fieldName === fieldName ? { ...fp, permission } : fp)))
+    const temp = fieldPermissions.map((fp) => {
+      if (fp.fieldName === fieldName) {
+        return { ...fp, permission }
+      }
+      return fp;
+    })
+    setFieldPermissions(temp)
   }
 
   const handleFilterChange = (fieldName: string, filterString: string) => {
@@ -78,6 +97,8 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
   if (sharedUsers.length === 0) {
     return <div className="text-center py-8 text-muted-foreground">No users have been shared with this table yet.</div>
   }
+
+  console.log(fieldPermissions)
 
   return (
     <>
@@ -177,8 +198,9 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                 <h3 className="font-medium mb-3">Column Permissions</h3>
                 <div className="border rounded-md p-4 space-y-6">
                   {fields.map((field) => {
-                    const fieldPermission = fieldPermissions.find((fp) => fp.fieldName === field.name)
-
+                    const fieldPermission = fieldPermissions.find((fp) => {
+                      return fp.fieldName === field.name
+                    })
                     return (
                       <div key={field.name} className="flex flex-col sm:flex-row sm:items-start gap-2">
                         <div className="w-32 pt-2 flex-shrink-0">{field.name}</div>

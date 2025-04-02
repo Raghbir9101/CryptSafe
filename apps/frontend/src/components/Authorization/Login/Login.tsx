@@ -137,7 +137,7 @@ export default function SignIn() {
       <Card className="w-full max-w-[450px]">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <SitemarkIcon />
+
           </div>
           <CardTitle className="text-2xl text-center cursor-pointer">Sign In</CardTitle>
         </CardHeader>

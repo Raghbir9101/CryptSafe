@@ -74,7 +74,7 @@ export default function Register() {
       <Card className="w-full max-w-[450px]">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <SitemarkIcon />
+
           </div>
           <CardTitle className="text-2xl text-center">Create an account</CardTitle>
         </CardHeader>
