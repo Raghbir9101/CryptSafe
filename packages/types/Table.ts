@@ -6,8 +6,8 @@ export interface TableInterface {
     sharedWith: SharedWithInterface[];
     createdBy: string;
     createdAt: string;
-    updatedBy: string;
-    updatedAt: object | string;
+    updatedBy: object | string;
+    updatedAt: string;
 }
 
 export interface FieldInterface {

@@ -46,62 +46,62 @@ export default function Tables() {
         <TableBody>
           {Table.value.data?.map((table) => {
             return <TableRow key={table._id}>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className='cursor-pointer'
-                  onClick={() => nav(`/tables/share/${table._id}`)}
-                  disabled={Auth.value.loggedInUser?._id !== table.createdBy}
-                >
-                  <ShareIcon className="h-4 w-4 " />
-                </Button>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={Auth.value.loggedInUser?._id !== table.createdBy ? "cursor-not-allowed text-gray-400" : "cursor-pointer"}
+                    onClick={() => Auth.value.loggedInUser?._id === table.createdBy && nav(`/tables/share/${table._id}`)}
+                  // disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                  >
+                    <ShareIcon className="h-4 w-4 " />
+                  </Button>
+                  <Button
+                    className={Auth.value.loggedInUser?._id !== table.createdBy ? "cursor-not-allowed text-gray-400" : "cursor-pointer"}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => Auth.value.loggedInUser?._id === table.createdBy && handleDelete(table._id)}
+                  // disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    className={Auth.value.loggedInUser?._id !== table.createdBy ? "cursor-not-allowed text-gray-400" : "cursor-pointer"}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => Auth.value.loggedInUser?._id === table.createdBy && nav(`/tables/update/${table._id}`)}
+                  // disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+              <TableCell>
                 <Button
                   className="cursor-pointer"
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleDelete(table._id)}
-                  disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                  onClick={() => {
+                    SelectedTable.value = table
+                    nav(`/tables/${table._id}`)
+                  }}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4" />
                 </Button>
-                <Button
-                  className="cursor-pointer"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => nav(`/tables/update/${table._id}`)}
-                  disabled={Auth.value.loggedInUser?._id !== table.createdBy}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Button
-                className="cursor-pointer"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  SelectedTable.value = table
-                  nav(`/tables/${table._id}`)
-                }}
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </TableCell>
-            <TableCell>{table.name}</TableCell>
-            <TableCell>{table.description}</TableCell>
-            <TableCell>
-              {new Date(table.updatedAt).toLocaleString()}
-            </TableCell>
-            <TableCell>
-              {new Date(table.createdAt).toLocaleString()}
-            </TableCell>
-            <TableCell className='text-center'>
-              {table?.updatedBy?.name || "-"}
-            </TableCell>
-          </TableRow>
+              </TableCell>
+              <TableCell>{table.name}</TableCell>
+              <TableCell>{table.description}</TableCell>
+              <TableCell>
+                {new Date(table.updatedAt).toLocaleString()}
+              </TableCell>
+              <TableCell>
+                {new Date(table.createdAt).toLocaleString()}
+              </TableCell>
+              <TableCell className='text-center'>
+                {table?.updatedBy?.name || "-"}
+              </TableCell>
+            </TableRow>
           })}
         </TableBody>
       </TableComponent>
