@@ -8,8 +8,8 @@ import Users from "../Users/Users";
 import TableUpdate from "../Table/TableUpdate";
 import TableCreate from "../Table/TableCreate";
 import UsersUpdate from "../Users/UsersUpdate";
-import { isAuthenticated } from "../Services/AuthService";
 import TableShare from "../Table/TableShare";
+import { isAuthenticated } from "../Services/AuthService";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (isAuthenticated.value) {

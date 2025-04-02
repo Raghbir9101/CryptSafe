@@ -55,3 +55,17 @@ export const logout = async () => {
         return error
     }
 }
+
+
+
+export const loginWithGoogle = async (token: string): Promise<any> => {
+    try {
+        const response = await api.post('/auth/google', { token });
+        return response.data;
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Google login failed'
+        };
+    }
+}; 
