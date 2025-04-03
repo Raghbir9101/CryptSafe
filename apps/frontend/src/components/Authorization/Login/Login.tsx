@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { login, loginWithGoogle } from '@/components/Services/AuthService';
+import { getUserAfterRefresh, login, loginWithGoogle } from '@/components/Services/AuthService';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { SitemarkIcon } from '../../Icons/Icons';
 import { api } from '@/Utils/utils';
@@ -115,6 +115,7 @@ export default function SignIn() {
               if (response.data.success) {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('user', JSON.stringify(response.data.user));
+                getUserAfterRefresh()
                 navigate('/tables');
               }
             }

@@ -171,6 +171,7 @@ export default function TableContent() {
     fetchTableData(); // Reset changes
   };
 
+
   const handleDelete = async (rowId: string) => {
     try {
       await api.delete(`/tables/delete/${id}/${rowId}`);
@@ -260,6 +261,8 @@ export default function TableContent() {
   };
 
   const renderInputField = (field: TableField, value: any, onChange: (value: any) => void) => {
+    const baseInputClass = "h-9 w-full px-2 text-sm"; // Consistent height and padding
+    
     switch (field.type) {
       case 'TEXT':
         return (
@@ -267,7 +270,7 @@ export default function TableContent() {
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${field.name}`}
-            className="w-full"
+            className={baseInputClass}
           />
         );
       case 'NUMBER':
@@ -277,7 +280,7 @@ export default function TableContent() {
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${field.name}`}
-            className="w-full"
+            className={baseInputClass}
           />
         );
       case 'DATE':
@@ -286,12 +289,12 @@ export default function TableContent() {
             type="datetime-local"
             value={value ? new Date(value).toISOString().slice(0, 16) : ''}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full"
+            className={baseInputClass}
           />
         );
       case 'BOOLEAN':
         return (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center h-9"> {/* Match height */}
             <Checkbox
               checked={value || false}
               onCheckedChange={(checked) => onChange(checked)}
@@ -304,13 +307,13 @@ export default function TableContent() {
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${field.name}`}
-            className="w-full"
+            className={`${baseInputClass} min-h-[36px] resize-none`}
           />
         );
       case 'SELECT':
         return (
           <Select value={value || ''} onValueChange={onChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className={baseInputClass}>
               <SelectValue placeholder={`Select ${field.name}`} />
             </SelectTrigger>
             <SelectContent>
@@ -328,7 +331,7 @@ export default function TableContent() {
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${field.name}`}
-            className="w-full"
+            className={baseInputClass}
           />
         );
     }
@@ -447,14 +450,14 @@ export default function TableContent() {
       </div>
 
       <div className="rounded-md border">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
               {tableFields.map((field) => (
-                <TableHead key={field.name} className="max-w-[250px]">
+                <TableHead key={field.name} className="w-[200px]">
                   <div className="flex items-center gap-2">
-                    <span>{field.name}</span>
-                    <div className="flex items-center gap-1">
+                    <span className="truncate">{field.name}</span>
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -496,16 +499,20 @@ export default function TableContent() {
             {getSortedAndFilteredRows().map((row) => (
               <TableRow key={row._id}>
                 {tableFields.map((field) => (
-                  <TableCell key={field.name} className="max-w-[250px]">
+                  <TableCell key={field.name} className="w-[200px] p-0">
                     {editingRow === row._id && hasWritePermission(field.name) ? (
-                      renderInputField(
-                        field,
-                        row.data[field.name],
-                        (value) => handleInputChange(row._id, field.name, value)
-                      )
+                      <div className="px-4 py-2">
+                        {renderInputField(
+                          field,
+                          row.data[field.name],
+                          (value) => handleInputChange(row._id, field.name, value)
+                        )}
+                      </div>
                     ) : (
-                      <div className="py-2">
-                        {formatValue(row.data[field.name], field.type)}
+                      <div className="px-4 py-2 h-[36px] flex items-center">
+                        <span className="truncate">
+                          {formatValue(row.data[field.name], field.type)}
+                        </span>
                       </div>
                     )}
                   </TableCell>

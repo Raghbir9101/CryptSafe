@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import "./App.css";
 import AllRoutes from "./components/Routes/Routes";
-import { getUserAfterRefresh, logout } from "./components/Services/AuthService";
+import { getUserAfterRefresh, isAuthenticated, logout } from "./components/Services/AuthService";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ function App() {
     getUserAfterRefresh();
   }, []);
 
+
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
@@ -21,7 +22,7 @@ function App() {
         <div className="w-[90%] flex h-16 items-center justify-between px-6 mx-auto">
           <NavLink to="/tables" className="text-xl font-bold tracking-wide">CryptSafe</NavLink>
           <div className="flex items-center gap-4">
-            <nav className="flex items-center gap-4">
+            {isAuthenticated.value && <nav className="flex items-center gap-4">
               <Button className="cursor-pointer"
                 variant={location.pathname === "/tables" ? "default" : "ghost"}
                 onClick={() => nav("/tables")}
@@ -34,17 +35,17 @@ function App() {
               >
                 Users
               </Button>
-            </nav>
+            </nav>}
             <div className="flex items-center gap-4">
-              <Button className="cursor-pointer" onClick={() => nav("/tables/create")}>
+              {isAuthenticated.value && <Button className="cursor-pointer" onClick={() => nav("/tables/create")}>
                 Add
-              </Button>
-              <Button className="cursor-pointer" variant="destructive" onClick={() => {
+              </Button>}
+               <Button className="cursor-pointer" variant={isAuthenticated.value ? "destructive" : "default"} onClick={() => {
                 nav("/login");
                 logout();
               }}
               >
-                Log Out
+                {isAuthenticated.value ? "Log Out" : "Log In"}
               </Button>
             </div>
           </div>

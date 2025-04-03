@@ -13,7 +13,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 export default class TableController {
 
     static getAllTableData = asyncHandler(async (req, res): Promise<void> => {
-        const tables = await Table.find({ createdBy: req?.user?._id })
+        const tables = await Table.find({ createdBy: req?.user?._id }).populate('updatedBy', 'name')
         res.status(200).json(tables)
     })
 
@@ -221,6 +221,10 @@ export default class TableController {
             },
             { new: true }
         );
+        
+        //find the table, change the updatedBy field to the user's id
+        const updatedTable  = await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true })
+
 
         if (!row) {
             return res.status(404).json({ message: "Row not found" })

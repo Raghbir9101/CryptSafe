@@ -98,7 +98,7 @@ export default function Tables() {
               <TableCell>
                 {new Date(table.createdAt).toLocaleString()}
               </TableCell>
-              <TableCell className='text-center'>
+              <TableCell className={table?.updatedBy?.name ? '' : 'text-center'}>
                 {table?.updatedBy?.name || "-"}
               </TableCell>
             </TableRow>
