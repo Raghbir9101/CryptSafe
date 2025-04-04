@@ -13,12 +13,22 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 export default class TableController {
 
     static getAllTableData = asyncHandler(async (req, res): Promise<void> => {
-        const tables = await Table.find({ createdBy: req?.user?._id }).populate('updatedBy', 'name')
+        const tables = await Table.find({
+            $or: [
+                { createdBy: req?.user?._id },
+                { "sharedWith.email": req?.user?.email }
+            ]
+        }).populate('updatedBy', 'name')
         res.status(200).json(tables)
     })
 
     static getTableDataWithID = asyncHandler(async (req, res): Promise<void> => {
-        const tables = await Table.findOne({ createdBy: req?.user?._id, _id: req.params.id })
+        const tables = await Table.findOne({
+            $or: [
+                { createdBy: req?.user?._id, _id: req.params.id },
+                { "sharedWith.email": req?.user?.email, _id: req.params.id }
+            ]
+        }).populate('updatedBy', 'name')
         res.status(200).json(tables)
     })
 
@@ -222,8 +232,7 @@ export default class TableController {
             { new: true }
         );
         
-        //find the table, change the updatedBy field to the user's id
-        const updatedTable  = await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true })
+        await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true })
 
 
         if (!row) {

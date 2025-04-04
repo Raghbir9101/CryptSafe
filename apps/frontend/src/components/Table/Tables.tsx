@@ -25,6 +25,20 @@ export default function Tables() {
       console.log("error")
     }
   }
+
+  const hasTablePermission = (table: any, permission: 'edit' | 'delete') => {
+    // Check if user is the creator
+    if (Auth.value.loggedInUser?._id === table.createdBy) {
+      return true;
+    }
+
+    // Check shared permissions
+    const sharedUser = table.sharedWith?.find(
+      (user: any) => user.email === Auth.value.loggedInUser?.email
+    );
+    return sharedUser?.tablePermissions?.[permission] || false;
+  }
+
   useEffect(() => {
     getTables()
   }, [])
@@ -51,27 +65,30 @@ export default function Tables() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={Auth.value.loggedInUser?._id !== table.createdBy ? "cursor-not-allowed text-gray-400" : "cursor-pointer"}
-                    onClick={() => Auth.value.loggedInUser?._id === table.createdBy && nav(`/tables/share/${table._id}`)}
-                  // disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                    className={`${!hasTablePermission(table, 'edit') 
+                      ? "cursor-not-allowed text-gray-400 hover:bg-transparent hover:text-gray-400" 
+                      : "cursor-pointer"}`}
+                    onClick={() => hasTablePermission(table, 'edit') && nav(`/tables/share/${table._id}`)}
                   >
-                    <ShareIcon className="h-4 w-4 " />
+                    <ShareIcon className="h-4 w-4" />
                   </Button>
                   <Button
-                    className={Auth.value.loggedInUser?._id !== table.createdBy ? "cursor-not-allowed text-gray-400" : "cursor-pointer"}
+                    className={`${!hasTablePermission(table, 'delete') 
+                      ? "cursor-not-allowed text-gray-400 hover:bg-transparent hover:text-gray-400" 
+                      : "cursor-pointer"}`}
                     variant="ghost"
                     size="icon"
-                    onClick={() => Auth.value.loggedInUser?._id === table.createdBy && handleDelete(table._id)}
-                  // disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                    onClick={() => hasTablePermission(table, 'delete') && handleDelete(table._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                   <Button
-                    className={Auth.value.loggedInUser?._id !== table.createdBy ? "cursor-not-allowed text-gray-400" : "cursor-pointer"}
+                    className={`${!hasTablePermission(table, 'edit') 
+                      ? "cursor-not-allowed text-gray-400 hover:bg-transparent hover:text-gray-400" 
+                      : "cursor-pointer"}`}
                     variant="ghost"
                     size="icon"
-                    onClick={() => Auth.value.loggedInUser?._id === table.createdBy && nav(`/tables/update/${table._id}`)}
-                  // disabled={Auth.value.loggedInUser?._id !== table.createdBy}
+                    onClick={() => hasTablePermission(table, 'edit') && nav(`/tables/update/${table._id}`)}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
