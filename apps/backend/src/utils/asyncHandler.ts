@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "./logger"; // Assuming you have a logger set up
 import { UserInterface } from "../models/user.model";
-
-type RequestWithUser = Request & { [key: string]: any, user?: UserInterface };
+type RequestWithUser = Request & { [key: string]: any, user?: UserInterface, userIP?: string };
 
 export const asyncHandler = (
   fn: (req: RequestWithUser, res: Response, next: NextFunction) => Promise<void>
@@ -15,8 +14,8 @@ export const asyncHandler = (
 
         // Parse the error stack trace
         const trace = stackTrace.parse(error);
-        const firstFrame = trace[0];
-        const { fileName, lineNumber, columnNumber } = firstFrame ? {
+        const firstFrame = trace[0] as any;
+        const { fileName = "", lineNumber = '', columnNumber = "" } = firstFrame ? {
             fileName: firstFrame.getFileName(),
             lineNumber: firstFrame.getLineNumber(),
             columnNumber: firstFrame.getColumnNumber()

@@ -1,6 +1,6 @@
 import User, { UserInterface } from "../models/user.model";
 import { asyncHandler } from "../utils/asyncHandler";
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import querystring from 'querystring';
 import dotenv from "dotenv";
@@ -34,10 +34,10 @@ export default class AuthController {
         }
 
         // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
-        const newUser = new User({ email, name:userName, password: hashedPassword });
+        const newUser = new User({ email, name:userName, password });
         await newUser.save();
 
         res.status(HttpStatusCodes.CREATED).json({ message: 'User registered successfully' });

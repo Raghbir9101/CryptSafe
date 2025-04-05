@@ -8,7 +8,6 @@ import Table from "../models/table.model";
 import Data from "../models/data.model";
 import { TableInterface } from "@repo/types";
 dotenv.config();
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 export default class TableController {
 
@@ -73,7 +72,7 @@ export default class TableController {
         }
 
         await table.save()
-        
+
         res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
     })
 
@@ -87,15 +86,49 @@ export default class TableController {
 
     static getRows = asyncHandler(async (req, res): Promise<any> => {
         const tableID = req.params.id;
-        if (!tableID) {
-            return res.status(400).json({ message: "Table ID is required" })
+        const { isOwner, isShared, data, error, sharedUserSettings } = await this.checkIsTableSharedWithUserAndAllowed(req, res);
+
+        if (error) {
+            return res.status(400).json({ message: error })
         }
-        const rows = await Data.find({ tableID })
-        res.status(200).json(rows)
+
+        if (isOwner) {
+            const page = +req.query.page || 1;
+            const skip = (page - 1) * (+req.query.limit || 10);
+            const rows = await Data.find({ tableID }).skip(skip).limit(10)
+            return res.status(200).json(rows)
+        }
+
+
+        if (isShared) {
+            const shownFields = sharedUserSettings.fieldPermission.map(item => item.permission != "NONE").reduce((acc, item, index) => {
+                if (item) acc[`data.${data.fields[index].name}`] = 1;
+                return acc;
+            }, {})
+
+            const filterQuery = {};
+            sharedUserSettings.fieldPermission.forEach((item, index) => {
+                if (item.filter.length > 0) {
+                    filterQuery[`data.${data.fields[index].name}`] = { $in: item.filter }
+                }
+            })
+
+            const userPageLimit = sharedUserSettings?.rowsPerPageLimit || 10;
+            const page = +req.query.page || 1;
+            const skip = (page - 1) * userPageLimit;
+
+            const rows = await Data.find({ tableID, ...filterQuery }, shownFields).skip(skip).limit(userPageLimit)
+            res.status(200).json(rows)
+        }
+
     })
 
     static insertRow = asyncHandler(async (req, res): Promise<any> => {
         const tableID = req.params.tableID;
+        const { error } = await this.checkIsTableSharedWithUserAndAllowed(req, res);
+        if (error) {
+            return res.status(400).json({ message: error })
+        }
         const data = req.body;
         if (!tableID) {
             return res.status(400).json({ message: "Table ID is required" })
@@ -163,6 +196,10 @@ export default class TableController {
     })
 
     static updateRow = asyncHandler(async (req, res): Promise<any> => {
+        const { error } = await this.checkIsTableSharedWithUserAndAllowed(req, res);
+        if (error) {
+            return res.status(400).json({ message: error })
+        }
         const { tableID, rowID } = req.params;
         const data = req.body;
 
@@ -231,7 +268,7 @@ export default class TableController {
             },
             { new: true }
         );
-        
+
         await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true })
 
 
@@ -243,6 +280,10 @@ export default class TableController {
     })
 
     static deleteRow = asyncHandler(async (req, res): Promise<any> => {
+        const { error } = await this.checkIsTableSharedWithUserAndAllowed(req, res);
+        if (error) {
+            return res.status(400).json({ message: error })
+        }
         const rowID = req.params.rowID;
         if (!rowID) {
             return res.status(400).json({ message: "Row ID is required" })
@@ -250,4 +291,131 @@ export default class TableController {
         await Data.findByIdAndDelete(rowID)
         res.status(200).json({ message: "Row deleted successfully" })
     })
+
+    static checkIsTableSharedWithUserAndAllowed = async (req, res) => {
+        const tableID = req.params.id;
+        const userID = req.user._id;
+
+        if (!tableID) {
+            return {
+                isOwner: false,
+                isShared: false,
+                data: null,
+                error: "Table ID is required",
+                sharedUserSettings: null
+            }
+        }
+
+        const table = await Table.findOne({ _id: tableID });
+
+        if (userID.toString() == table.createdBy.toString()) {
+            return {
+                isOwner: true,
+                isShared: false,
+                data: null,
+                error: null,
+                sharedUserSettings: null
+            }
+        }
+
+        const isShared = table.sharedWith.findIndex(item => item.email == req.user.email);
+
+        if (isShared == -1) {
+            return {
+                isOwner: false,
+                isShared: false,
+                data: null,
+                error: "Table not shared with you",
+                sharedUserSettings: null
+            }
+        }
+
+        const userSettings = table.sharedWith[isShared];
+
+        if (userSettings.isBlocked) {
+            return {
+                isOwner: false,
+                isShared: true,
+                sharedUserSettings: userSettings,
+                error: "You are blocked by the admin. Please contact your admin.",
+                data: table
+            }
+        }
+
+        if (userSettings.restrictNetwork) {
+            const isIPAllowed = this.isUserIPAllowed(userSettings.networkAccess, req.userIP);
+            if (!isIPAllowed) {
+                return {
+                    isOwner: false,
+                    isShared: true,
+                    sharedUserSettings: userSettings,
+                    error: "Your IP Address is not authorized by the Admin. Please contact your admin.",
+                    data: table
+                }
+            }
+        }
+
+        if (userSettings.restrictWorkingTime) {
+            const isWorkingTimeAllowed = this.isWorkingTimeWithinAccessTime(userSettings.workingTimeAccess);
+            if (!isWorkingTimeAllowed) {
+                return {
+                    isOwner: false,
+                    isShared: true,
+                    sharedUserSettings: userSettings,
+                    error: "Your working time is not within the access time range. Please contact your admin.",
+                    data: table
+                }
+            }
+        }
+
+        return {
+            isOwner: false,
+            isShared: true,
+            sharedUserSettings: userSettings,
+            error: null,
+            data: table
+        }
+
+    }
+
+    static isUserIPAllowed(networkAccess, ip) {
+        const networkAccessObj = networkAccess.find(item => ip == item.IP_ADDRESS);
+        if (!networkAccessObj) return false;
+        if (networkAccessObj.enabled) return true;
+        return false
+    }
+
+    static getAbbreviatedDayName(date) {
+        const options = { weekday: 'short' };
+        return date.toLocaleString('en-US', options).toUpperCase();
+    }
+
+    static isWorkingTimeWithinAccessTime(workingTimeAccess) {
+        const currentTime = new Date();
+
+        const localeTime = currentTime.toLocaleTimeString("en-IN", { hour12: false, timeZone: 'Asia/Kolkata' }).split(":").map(Number);;
+        const currentHour = localeTime[0]
+        const currentMinute = localeTime[1]
+        const currentDay = this.getAbbreviatedDayName(currentTime);
+
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+        const currentDayAccess = workingTimeAccess.find(dayAccess => dayAccess.day === currentDay);
+        if (!currentDayAccess) return false;
+        if (!currentDayAccess.accessTime.length) return false;
+        if (!currentDayAccess.enabled) return false;
+
+        for (const [startTime, endTime] of currentDayAccess.accessTime) {
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+
+            const startTimeInMinutes = startHour * 60 + startMinute;
+            const endTimeInMinutes = endHour * 60 + endMinute;
+            if (currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }
