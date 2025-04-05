@@ -1,7 +1,4 @@
-import User, { UserInterface } from "../models/user.model";
 import { asyncHandler } from "../utils/asyncHandler";
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
 import { HttpStatusCodes } from "../utils/errorCodes";
 import Table from "../models/table.model";
