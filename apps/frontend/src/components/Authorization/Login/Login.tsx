@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getUserAfterRefresh, login, loginWithGoogle } from '@/components/Services/AuthService';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { SitemarkIcon } from '../../Icons/Icons';
+import { Button } from "@/components/ui/button"
 import { api } from '@/Utils/utils';
+import { toast } from 'sonner';
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -53,10 +53,14 @@ export default function SignIn() {
     try {
       const data = new FormData(event.currentTarget);
       const response = await login(data.get('email') as string, data.get('password') as string);
+      toast.success("Login Successful", {
+        description: "You have successfully logged in.",
+      });
       if (response.success) {
         navigate('/dashboard');
       }
     } catch (error) {
+      toast.error("Login failed")
       console.error('Login failed:', error);
     } finally {
       setIsLoading(false);

@@ -54,7 +54,6 @@ type SortConfig = {
 };
 
 export default function TableContent() {
-  console.log(SelectedTable.value)
   const [tableFields, setTableFields] = useState<TableField[]>([]);
   const [rows, setRows] = useState<TableRow[]>([]);
   const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -63,6 +62,7 @@ export default function TableContent() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: '', direction: null });
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [tableData, setTableData] = useState<any>(null);
+  const [currentUserTableContent, setCurrentUserTableContent] = useState<any>(null);
   const { id } = useParams();
 
   useEffect(() => {
@@ -78,7 +78,6 @@ export default function TableContent() {
       setTableFields(tableRes.data.fields);
       setTableData(tableRes.data);
       setRows(rowsRes.data);
-
       // Initialize newRow with empty values for each field
       const emptyRow = tableRes.data.fields.reduce((acc: Record<string, any>, field: TableField) => {
         acc[field.name] = '';
@@ -98,7 +97,7 @@ export default function TableContent() {
   const hasWritePermission = (fieldName: string) => {
     if (isOwner) return true;
     if (!sharedUser) return false;
-    
+
     const fieldPermission = fieldPermissions.find((fp: any) => fp.fieldName === fieldName);
     return fieldPermission?.permission === 'WRITE';
   };
@@ -115,7 +114,7 @@ export default function TableContent() {
 
     // Get all required fields
     const requiredFields = tableFields.filter(field => field.required);
-    
+
     // Check if user has write permission for all required fields
     return requiredFields.every(field => hasWritePermission(field.name));
   };
@@ -262,7 +261,7 @@ export default function TableContent() {
 
   const renderInputField = (field: TableField, value: any, onChange: (value: any) => void) => {
     const baseInputClass = "h-9 w-full px-2 text-sm"; // Consistent height and padding
-    
+
     switch (field.type) {
       case 'TEXT':
         return (
@@ -397,7 +396,15 @@ export default function TableContent() {
 
     return filteredRows;
   };
-
+  const hasShowPermission = (fieldName: string) => {
+    const fieldPermission = currentUserTableContent?.fieldPermission?.find((fp: any) => fp?.fieldName === fieldName);
+    console.log(fieldPermission);
+    return fieldPermission?.permission === 'NONE' ? false : true;
+  };
+  useEffect(() => {
+    const user = tableData?.sharedWith?.find((per: any) => per.email === Auth.value.loggedInUser?.email)
+    setCurrentUserTableContent(user);
+  }, [tableData])
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -453,8 +460,10 @@ export default function TableContent() {
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              {tableFields.map((field) => (
-                <TableHead key={field.name} className="w-[200px]">
+              {tableFields?.filter((field) => {
+                return hasShowPermission(field.name);
+              })?.map((field) => (
+                <TableHead key={field?.name} className="w-[200px]">
                   <div className="flex items-center gap-2">
                     <span className="truncate">{field.name}</span>
                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -498,25 +507,26 @@ export default function TableContent() {
           <TableBody>
             {getSortedAndFilteredRows().map((row) => (
               <TableRow key={row._id}>
-                {tableFields.map((field) => (
-                  <TableCell key={field.name} className="w-[200px] p-0">
-                    {editingRow === row._id && hasWritePermission(field.name) ? (
-                      <div className="px-4 py-2">
-                        {renderInputField(
-                          field,
-                          row.data[field.name],
-                          (value) => handleInputChange(row._id, field.name, value)
-                        )}
-                      </div>
-                    ) : (
-                      <div className="px-4 py-2 h-[36px] flex items-center">
-                        <span className="truncate">
-                          {formatValue(row.data[field.name], field.type)}
-                        </span>
-                      </div>
-                    )}
-                  </TableCell>
-                ))}
+                {tableFields?.filter((field) => hasShowPermission(field.name))
+                  .map((field) => (
+                    <TableCell key={field.name} className="w-[200px] p-0">
+                      {editingRow === row._id && hasWritePermission(field.name) ? (
+                        <div className="px-4 py-2">
+                          {renderInputField(
+                            field,
+                            row.data[field.name],
+                            (value) => handleInputChange(row._id, field.name, value)
+                          )}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 h-[36px] flex items-center">
+                          <span className="truncate">
+                            {formatValue(row.data[field.name], field.type)}
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
+                  ))}
                 {hasAnyWritePermission() && (
                   <TableCell>
                     <div className="flex items-center gap-2">

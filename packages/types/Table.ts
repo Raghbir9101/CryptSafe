@@ -50,6 +50,6 @@ export interface SharedWithInterface {
 
 export interface FieldPermissionInterface {
     fieldName: string;
-    permission: string;
+    permission: "READ" | "WRITE" | "NONE";
     filter: string[]
 }
