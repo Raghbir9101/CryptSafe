@@ -53,6 +53,7 @@ export default function SignIn() {
     try {
       const data = new FormData(event.currentTarget);
       const response = await login(data.get('email') as string, data.get('password') as string);
+      console.log(response)
       toast.success("Login Successful", {
         description: "You have successfully logged in.",
       });
