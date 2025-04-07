@@ -37,7 +37,7 @@ export default class AuthController {
         // const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
-        const newUser = new User({ email, name:userName, password });
+        const newUser = new User({ email, name: userName, password });
         await newUser.save();
 
         res.status(HttpStatusCodes.CREATED).json({ message: 'User registered successfully' });
@@ -72,7 +72,7 @@ export default class AuthController {
         } as jwt.SignOptions);
 
         const { password: _, ...userWithoutPassword } = user;
-        res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: false });
+        res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: true, sameSite: "none" });
 
         res.status(HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
@@ -141,7 +141,7 @@ export default class AuthController {
             } as jwt.SignOptions);
 
 
-            res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: false });
+            res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: true, sameSite: "none" });
             res.json({
                 success: true,
                 token,

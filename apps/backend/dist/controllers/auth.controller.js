@@ -60,7 +60,7 @@ class AuthController {
             expiresIn: '1h'
         });
         const { password: _, ...userWithoutPassword } = user;
-        res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: false });
+        res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: true, sameSite: "none" });
         res.status(errorCodes_1.HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
     static getGoogleAuthUrl = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
@@ -119,7 +119,7 @@ class AuthController {
             const token = jsonwebtoken_1.default.sign({ userId: user._id }, JWT_SECRET, {
                 expiresIn: '1h'
             });
-            res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: false });
+            res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: true, sameSite: "none" });
             res.json({
                 success: true,
                 token,
