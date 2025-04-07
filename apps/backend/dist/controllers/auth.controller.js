@@ -64,7 +64,6 @@ class AuthController {
             maxAge: 1000 * 60 * 60 * 24 * 7,
             secure: true,
             sameSite: "none",
-            domain: process.env.FRONTEND_URL,
             httpOnly: true
         });
         res.status(errorCodes_1.HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
@@ -129,7 +128,6 @@ class AuthController {
                 maxAge: 1000 * 60 * 60 * 24 * 7,
                 secure: true,
                 sameSite: "none",
-                domain: '.yourdomain.com',
                 httpOnly: true
             });
             res.json({

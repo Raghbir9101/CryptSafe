@@ -76,7 +76,6 @@ export default class AuthController {
             maxAge: 1000 * 60 * 60 * 24 * 7, 
             secure: true, 
             sameSite: "none",
-            domain: process.env.FRONTEND_URL,
             httpOnly: true
         });
 
@@ -151,7 +150,6 @@ export default class AuthController {
                 maxAge: 1000 * 60 * 60 * 24 * 7, 
                 secure: true, 
                 sameSite: "none",
-                domain: '.yourdomain.com',
                 httpOnly: true
             });
             res.json({
