@@ -14,7 +14,7 @@ const app = (0, express_1.default)();
 // Middleware
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
-    origin: "*",
+    origin: process.env.FRONTEND_URL,
     credentials: true
 }));
 app.use((0, cookie_parser_1.default)());
