@@ -72,7 +72,13 @@ export default class AuthController {
         } as jwt.SignOptions);
 
         const { password: _, ...userWithoutPassword } = user;
-        res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: true, sameSite: "none" });
+        res.cookie('authorization', token, { 
+            maxAge: 1000 * 60 * 60 * 24 * 7, 
+            secure: true, 
+            sameSite: "none",
+            domain: process.env.FRONTEND_URL,
+            httpOnly: true
+        });
 
         res.status(HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
@@ -141,7 +147,13 @@ export default class AuthController {
             } as jwt.SignOptions);
 
 
-            res.cookie('authorization', token, { maxAge: 1000 * 60 * 60 * 24 * 7, secure: true, sameSite: "none" });
+            res.cookie('authorization', token, { 
+                maxAge: 1000 * 60 * 60 * 24 * 7, 
+                secure: true, 
+                sameSite: "none",
+                domain: '.yourdomain.com',
+                httpOnly: true
+            });
             res.json({
                 success: true,
                 token,
