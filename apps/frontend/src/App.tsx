@@ -17,7 +17,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Toaster />
+      <Toaster richColors />
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-md">
         <div className="w-[90%] flex h-16 items-center justify-between px-6 mx-auto">
           <NavLink to="/tables" className="text-xl font-bold tracking-wide">CryptSafe</NavLink>
@@ -40,7 +40,7 @@ function App() {
               {isAuthenticated.value && <Button className="cursor-pointer" onClick={() => nav("/tables/create")}>
                 Add
               </Button>}
-               <Button className="cursor-pointer" variant={isAuthenticated.value ? "destructive" : "default"} onClick={() => {
+              <Button className="cursor-pointer" variant={isAuthenticated.value ? "destructive" : "default"} onClick={() => {
                 nav("/login");
                 logout();
               }}

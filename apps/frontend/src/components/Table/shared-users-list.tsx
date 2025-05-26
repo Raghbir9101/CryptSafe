@@ -60,7 +60,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
     setIsEditModalOpen(true)
   }
 
-  const handlePermissionChange = (fieldName: string, permission: "READ" | "WRITE") => {
+  const handlePermissionChange = (fieldName: string, permission: "READ" | "WRITE" | "NONE") => {
     const temp = fieldPermissions.map((fp) => {
       if (fp.fieldName === fieldName) {
         return { ...fp, permission }
@@ -139,17 +139,17 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
 
   const addCurrentIP = async (type: 'IPv4' | 'IPv6') => {
     try {
-      const endpoint = type === 'IPv6' 
+      const endpoint = type === 'IPv6'
         ? 'https://api6.ipify.org?format=json'
         : 'https://api.ipify.org?format=json';
-      
+
       const response = await fetch(endpoint);
       const data = await response.json();
       const ip = data.ip;
-      
+
       setNetworkAccess([
         ...networkAccess,
-        { 
+        {
           IP_ADDRESS: ip,
           enabled: true,
           comment: `Current ${type} Address`,
@@ -275,7 +275,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                         <div className="w-32 flex-shrink-0">
                           <Select
                             value={fieldPermission?.permission || "READ"}
-                            onValueChange={(value: "READ" | "WRITE") => handlePermissionChange(field.name, value)}
+                            onValueChange={(value: "READ" | "WRITE" | "NONE") => handlePermissionChange(field.name, value)}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Permission" />
@@ -283,6 +283,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                             <SelectContent>
                               <SelectItem value="READ">Read</SelectItem>
                               <SelectItem value="WRITE">Write</SelectItem>
+                              <SelectItem value="NONE">None</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

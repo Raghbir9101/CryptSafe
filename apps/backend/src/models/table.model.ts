@@ -37,7 +37,7 @@ const tableSchema: Schema = new Schema({
       fieldPermission: {
         type: [{
           fieldName: { type: String, },
-          permission: { type: String, enum: ["READ", "WRITE"] },
+          permission: { type: String, enum: ["READ", "WRITE", "NONE"] },
           filter: { type: Array, default: [] }
         }],
       },
@@ -48,18 +48,18 @@ const tableSchema: Schema = new Schema({
       isBlocked: { type: Boolean, default: false },
       workingTimeAccess: {
         type: [{
-          day: { 
-            type: String, 
+          day: {
+            type: String,
             enum: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
-            required: true 
+            required: true
           },
-          accessTime: { 
-            type: [[String]], 
-            default: [] 
+          accessTime: {
+            type: [[String]],
+            default: []
           },
-          enabled: { 
-            type: Boolean, 
-            default: true 
+          enabled: {
+            type: Boolean,
+            default: true
           }
         }],
         default: [

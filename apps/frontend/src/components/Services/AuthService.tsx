@@ -25,7 +25,7 @@ export const login = async (email: string, password: string) => {
         return response.data
     } catch (error) {
         Auth.value = { ...Auth.value, status: 'error' }
-        return error
+        throw error
     }
 }
 
