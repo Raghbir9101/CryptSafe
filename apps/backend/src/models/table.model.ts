@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import { TableInterface } from "@repo/types";
+import { encrypt, decrypt } from "../utils/encryption";
+
 const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
 
 // Add this new schema before the tableSchema
@@ -13,12 +15,12 @@ const networkAccessSchema: Schema = new Schema({
 const NetworkAccess = mongoose.model("networkAccess", networkAccessSchema);
 
 const tableSchema: Schema = new Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
+  name: { type: String, required: true, get: decrypt, set: encrypt },
+  description: { type: String, required: true, get: decrypt, set: encrypt },
   fields: {
     type: [
       {
-        name: { type: String, required: true },
+        name: { type: String, required: true, get: decrypt, set: encrypt },
         unique: { type: Boolean, required: true },
         type: {
           type: String,
@@ -27,18 +29,18 @@ const tableSchema: Schema = new Schema({
         },
         required: { type: Boolean, required: true },
         hidden: { type: Boolean, required: true },
-        options: { type: [String], required: false },
+        options: { type: [String], required: false, get: decrypt, set: encrypt },
       }
     ], required: true
   },
   sharedWith: {
     type: [{
-      email: { type: String, required: false },
+      email: { type: String, required: false, get: decrypt, set: encrypt },
       fieldPermission: {
         type: [{
-          fieldName: { type: String, },
+          fieldName: { type: String, get: decrypt, set: encrypt },
           permission: { type: String, enum: ["READ", "WRITE", "NONE"] },
-          filter: { type: Array, default: [] }
+          filter: { type: Array, default: [], get: decrypt, set: encrypt }
         }],
       },
       tablePermissions: {
@@ -55,7 +57,9 @@ const tableSchema: Schema = new Schema({
           },
           accessTime: {
             type: [[String]],
-            default: []
+            default: [],
+            get: decrypt,
+            set: encrypt
           },
           enabled: {
             type: Boolean,
@@ -116,7 +120,11 @@ const tableSchema: Schema = new Schema({
     type: Types.ObjectId,
     ref: "user"
   },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
 
 const Table = mongoose.model<TableInterface & Document>("table", tableSchema);
 

@@ -200,14 +200,14 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {user.fieldPermission.map((fp) => (
+                  {user?.fieldPermission?.map((fp) => (
                     <Badge
-                      key={fp.fieldName}
-                      variant={fp.permission === "WRITE" ? "default" : "secondary"}
+                      key={fp?.fieldName}
+                      variant={fp?.permission === "WRITE" ? "default" : "secondary"}
                       className="text-xs"
                     >
-                      {fp.fieldName}: {fp.permission.toLowerCase()}
-                      {fp.filter.length > 0 && ` (${fp.filter.length} filters)`}
+                      {fp?.fieldName}: {fp?.permission?.toLowerCase()}
+                      {fp.filter?.length > 0 && ` (${fp?.filter.length} filters)`}
                     </Badge>
                   ))}
                 </div>
