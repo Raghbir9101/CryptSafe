@@ -6,11 +6,14 @@
     "start": "node dist/server.js",
     "test": "jest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0"
+  },
   "devDependencies": {
-    "typescript": "^5.7.2",
-    "root": "*",
+    "@repo/types": "*",
     "@repo/typescript-config": "*",
-    "@repo/types": "*"
+    "root": "*",
+    "typescript": "^5.7.2"
   }
 }

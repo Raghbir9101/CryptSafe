@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import { HttpStatusCodes } from "../utils/errorCodes";
 import Table from "../models/table.model";
 import Data from "../models/data.model";
-import { TableInterface } from "@repo/types";
+import { TableInterface, SharedWithInterface, FieldPermissionInterface } from "@repo/types";
+import { encrypt, decrypt } from "../utils/encryption";
 dotenv.config();
 
 export default class TableController {
@@ -14,64 +15,152 @@ export default class TableController {
                 { createdBy: req?.user?._id },
                 { "sharedWith.email": req?.user?.email }
             ]
-        }).populate('updatedBy', 'name')
-        res.status(200).json(tables)
-    })
+        }).populate('updatedBy', 'name');
+
+        const decryptedTables = tables.map(table => ({
+            ...table.toObject(),
+            name: decrypt(table.name),
+            description: decrypt(table.description),
+            fields: table.fields?.map(field => ({
+                ...field,
+                name: decrypt(field.name),
+                type: field.type,
+                options: field.options ? field.options.map(opt => decrypt(opt)) : []
+            })) || [],
+            sharedWith: table.sharedWith?.map(shared => ({
+                ...shared,
+                email: decrypt(shared.email),
+                fieldPermission: shared.fieldPermission?.map(fp => ({
+                    ...fp,
+                    fieldName: decrypt(fp.fieldName),
+                    filter: fp.filter?.map(f => decrypt(f)) || []
+                })) || []
+            })) || []
+        }));
+
+        res.status(200).json(decryptedTables);
+    });
 
     static getTableDataWithID = asyncHandler(async (req, res): Promise<void> => {
-        const tables = await Table.findOne({
+        const table = await Table.findOne({
             $or: [
                 { createdBy: req?.user?._id, _id: req.params.id },
                 { "sharedWith.email": req?.user?.email, _id: req.params.id }
             ]
-        }).populate('updatedBy', 'name')
-        res.status(200).json(tables)
-    })
+        }).populate('updatedBy', 'name');
+
+        if (!table) {
+            res.status(404).json({ message: "Table not found" });
+            return;
+        }
+
+        const decryptedTable = {
+            ...table.toObject(),
+            name: decrypt(table.name),
+            description: decrypt(table.description),
+            fields: table.fields?.map(field => ({
+                ...field,
+                type: field.type,
+                name: decrypt(field.name),
+                options: field.options ? field.options.map(opt => decrypt(opt)) : []
+            })) || [],
+            sharedWith: table.sharedWith?.map(shared => ({
+                ...shared,
+                email: decrypt(shared.email),
+                fieldPermission: shared.fieldPermission?.map(fp => ({
+                    ...fp,
+                    fieldName: decrypt(fp.fieldName),
+                    filter: fp.filter?.map(f => decrypt(f)) || []
+                })) || []
+            })) || []
+        };
+
+        res.status(200).json(decryptedTable);
+    });
 
     static createTable = asyncHandler(async (req, res): Promise<any> => {
-        const { name, fields, description } = req.body
+        const { name, fields, description } = req.body;
         console.log(req.body, 'req.body');
         if (!name || !fields || !description) {
-            return res.status(400).json({ message: "All fields are required" })
+            return res.status(400).json({ message: "All fields are required" });
         }
-        const table = await Table.create({ ...req.body, createdBy: req?.user?._id })
-        res.status(HttpStatusCodes.CREATED).json({ table, message: "Table created successfully" })
-    })
+
+        // Encrypt the data before saving
+        const encryptedData = {
+            ...req.body,
+            name: encrypt(name),
+            description: encrypt(description),
+            fields: fields.map((field: any) => ({
+                ...field,
+                name: encrypt(field.name),
+                type: field.type,
+                options: field.options ? field.options.map(opt => encrypt(opt)) : []
+            })),
+            createdBy: req?.user?._id
+        };
+
+        const table = await Table.create(encryptedData);
+        res.status(HttpStatusCodes.CREATED).json({ table, message: "Table created successfully" });
+    });
 
     static updateTable = asyncHandler(async (req, res): Promise<any> => {
-        const { name, fields, description } = req.body
+        const { name, fields, description } = req.body;
 
         if (!name || !fields || !description) {
-            return res.status(400).json({ message: "All fields are required" })
+            return res.status(400).json({ message: "All fields are required" });
         }
 
-        const table = await Table.findOneAndUpdate({ createdBy: req?.user?._id, _id: req.params.id }, { name, fields, description })
-        res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
-    })
+        // Encrypt the data before updating
+        const encryptedData = {
+            name: encrypt(name),
+            description: encrypt(description),
+            fields: fields.map((field: any) => ({
+                ...field,
+                name: encrypt(field.name),
+                type: field.type,
+                options: field.options ? field.options.map(opt => encrypt(opt)) : []
+            }))
+        };
+
+        const table = await Table.findOneAndUpdate(
+            { createdBy: req?.user?._id, _id: req.params.id },
+            encryptedData,
+            { new: true }
+        );
+        res.status(HttpStatusCodes.OK).json({ table, message: "Table updated successfully!" });
+    });
 
     static shareTable = asyncHandler(async (req, res): Promise<any> => {
         const id = req.params.id;
-        const { sharedWith }: { sharedWith: TableInterface["sharedWith"][0] } = req.body
+        const { sharedWith }: { sharedWith: TableInterface["sharedWith"][0] } = req.body;
 
         const table = await Table.findOne({ createdBy: req.user._id, _id: id });
 
-        const isTableAleadyShared = table.sharedWith.findIndex(item => item.email == sharedWith.email);
+        // Encrypt shared user data
+        const encryptedSharedWith: SharedWithInterface = {
+            ...sharedWith,
+            email: encrypt(sharedWith.email),
+            fieldPermission: sharedWith.fieldPermission.map((fp: FieldPermissionInterface) => ({
+                ...fp,
+                fieldName: encrypt(fp.fieldName),
+                filter: Array.isArray(fp.filter) ? fp.filter.map(f => encrypt(f)) : []
+            }))
+        };
 
-        if (isTableAleadyShared == -1) {
-            table.sharedWith.push(sharedWith)
-        }
-        else {
-            console.log(sharedWith)
+        const isTableAleadyShared = table.sharedWith.findIndex(item => decrypt(item.email) === decrypt(encryptedSharedWith.email));
+
+        if (isTableAleadyShared === -1) {
+            table.sharedWith.push(encryptedSharedWith);
+        } else {
             table.sharedWith = table.sharedWith.map(item => {
-                if (item.email === sharedWith.email) return sharedWith;
+                if (decrypt(item.email) === decrypt(encryptedSharedWith.email)) return encryptedSharedWith;
                 return item;
-            })
+            });
         }
 
-        await table.save()
-
-        res.status(HttpStatusCodes.OK).json({ table, message: "Table created updated !" })
-    })
+        await table.save();
+        res.status(HttpStatusCodes.OK).json({ table, message: "Table sharing updated!" });
+    });
 
     static deleteTable = asyncHandler(async (req, res): Promise<any> => {
         if (!req.params.id) {
