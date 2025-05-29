@@ -10,6 +10,9 @@ import TableCreate from "../Table/TableCreate";
 import UsersUpdate from "../Users/UsersUpdate";
 import TableShare from "../Table/TableShare";
 import { isAuthenticated } from "../Services/AuthService";
+import Home from "../Home/Home";
+import About from "../About/About";
+import Contact from "../Contact/Contact";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (isAuthenticated.value) {
@@ -21,6 +24,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export default function AllRoutes() {
     return (
         <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='/about' element={<About />} />
+            <Route path='/contact' element={<Contact />} />
             <Route path='/login' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <Login />} />
             <Route path='/register' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <Register />} />
 
