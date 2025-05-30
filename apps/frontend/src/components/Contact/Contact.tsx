@@ -1,0 +1,273 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Shield, Users } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Footer } from "../Footer/Footer";
+
+const Contact = () => {
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        company: "",
+        message: "",
+        inquiryType: "general"
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Handle form submission here
+        console.log("Form submitted:", formData);
+    };
+
+    const handleInputChange = (field: string, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const contactMethods = [
+        {
+            icon: Mail,
+            title: "Email Us",
+            description: "Get in touch via email",
+            contact: "security@cryptsafe.com",
+            available: "24/7 Response"
+        },
+        {
+            icon: Phone,
+            title: "Call Us",
+            description: "Speak with our security experts",
+            contact: "+1 (555) 123-4567",
+            available: "Mon-Fri 9AM-6PM EST"
+        },
+        // {
+        //   icon: MapPin,
+        //   title: "Visit Us",
+        //   description: "Our secure headquarters",
+        //   contact: "123 Security Blvd, Tech City, TC 12345",
+        //   available: "By appointment only"
+        // },
+        // {
+        //   icon: MessageSquare,
+        //   title: "Live Chat",
+        //   description: "Instant support available",
+        //   contact: "Available on website",
+        //   available: "24/7 Support"
+        // }
+    ];
+
+    const inquiryTypes = [
+        { value: "general", label: "General Inquiry" },
+        { value: "sales", label: "Sales & Pricing" },
+        { value: "technical", label: "Technical Support" },
+        { value: "partnership", label: "Partnership" },
+        { value: "security", label: "Security Audit" },
+        { value: "compliance", label: "Compliance Questions" }
+    ];
+
+    return (
+        <div>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+
+                <main className="container mx-auto px-6 py-20">
+                    {/* Hero Section */}
+                    <div className="text-center max-w-4xl mx-auto mb-20">
+                        <Badge variant="outline" className="mb-4 text-blue-600 border-blue-200">
+                            Get in Touch
+                        </Badge>
+                        <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight">
+                            Contact CryptSafe
+                        </h1>
+                        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                            Ready to secure your organization's data? Our security experts are here to help you
+                            implement the perfect solution for your needs.
+                        </p>
+                    </div>
+
+                    <div className="grid lg:grid-cols-2 gap-12 mb-20">
+                        {/* Contact Form */}
+                        <div className="flex flex-col space-y-8">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-6">Send Us a Message</h2>
+                                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                                    Fill out the form below and we'll get back to you within 24 hours.
+                                </p>
+                            </div>
+                            <Card className="shadow-xl border-0">
+                                <CardContent>
+                                    <form onSubmit={handleSubmit} className="space-y-6">
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="name">Full Name *</Label>
+                                                <Input
+                                                    id="name"
+                                                    placeholder="John Doe"
+                                                    value={formData.name}
+                                                    onChange={(e) => handleInputChange("name", e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="email">Email Address *</Label>
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    placeholder="john@company.com"
+                                                    value={formData.email}
+                                                    onChange={(e) => handleInputChange("email", e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="company">Company/Organization</Label>
+                                            <Input
+                                                id="company"
+                                                placeholder="Acme Corporation"
+                                                value={formData.company}
+                                                onChange={(e) => handleInputChange("company", e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="inquiry-type">Inquiry Type</Label>
+                                            <select
+                                                id="inquiry-type"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={formData.inquiryType}
+                                                onChange={(e) => handleInputChange("inquiryType", e.target.value)}
+                                            >
+                                                {inquiryTypes.map((type) => (
+                                                    <option key={type.value} value={type.value}>
+                                                        {type.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="message">Message *</Label>
+                                            <Textarea
+                                                id="message"
+                                                placeholder="Tell us about your security needs, current challenges, or any questions you have about CryptSafe..."
+                                                rows={6}
+                                                value={formData.message}
+                                                onChange={(e) => handleInputChange("message", e.target.value)}
+                                                required
+                                            />
+                                        </div>
+
+                                        <Button
+                                            type="submit"
+                                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg transition-all duration-300"
+                                        >
+                                            <Send className="w-4 h-4 mr-2" />
+                                            Send Message
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Contact Information */}
+                        <div className="space-y-8">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+                                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                                    Our team of security experts is available to discuss your specific requirements
+                                    and help you implement the right security solution.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {contactMethods?.map((method, index) => (
+                                    <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+                                        <CardContent className="px-6 py-2">
+                                            <div className="flex items-start gap-4">
+                                                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                    <method.icon className="w-6 h-6 text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold text-gray-900 mb-1">{method.title}</h3>
+                                                    <p className="text-sm text-gray-600 mb-2">{method.description}</p>
+                                                    <p className="font-medium text-blue-600">{method.contact}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{method.available}</p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            {/* Quick Links */}
+                            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                                <CardContent className="p-6">
+                                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <Clock className="w-5 h-5 text-blue-600" />
+                                        Need Immediate Help?
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start text-blue-600 border-blue-200 hover:bg-blue-50"
+                                            onClick={() => navigate("/about")}
+                                        >
+                                            <Shield className="w-4 h-4 mr-2" />
+                                            View Security Features
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start text-blue-600 border-blue-200 hover:bg-blue-50"
+                                            onClick={() => navigate("/login")}
+                                        >
+                                            <Users className="w-4 h-4 mr-2" />
+                                            Start Free Trial
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="bg-white rounded-3xl p-12 shadow-lg border border-gray-100">
+                        <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">Frequently Asked Questions</h2>
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {[
+                                {
+                                    question: "How quickly can CryptSafe be deployed?",
+                                    answer: "Most organizations can have CryptSafe fully deployed within 1-2 weeks, including user training and security configuration."
+                                },
+                                {
+                                    question: "Is CryptSafe compliant with industry standards?",
+                                    answer: "Yes, CryptSafe meets HIPAA, GDPR, and SOC 2 Type II standards with comprehensive audit trails and access controls."
+                                },
+                                {
+                                    question: "Can CryptSafe integrate with existing systems?",
+                                    answer: "CryptSafe offers APIs and integrations with major enterprise systems, SSO providers, and workflow tools."
+                                },
+                                {
+                                    question: "What kind of support do you provide?",
+                                    answer: "We offer 24/7 technical support, dedicated account management, and comprehensive training for all users."
+                                }
+                            ].map((faq, index) => (
+                                <div key={index} className="space-y-3">
+                                    <h3 className="font-semibold text-gray-900">{faq.question}</h3>
+                                    <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </main>
+            </div>
+            <Footer />
+        </div>
+    );
+};
+
+export default Contact;

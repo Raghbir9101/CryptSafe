@@ -1,0 +1,19 @@
+{
+  "name": "@repo/backend",
+  "scripts": {
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0"
+  },
+  "devDependencies": {
+    "@repo/types": "*",
+    "@repo/typescript-config": "*",
+    "root": "*",
+    "typescript": "^5.7.2"
+  }
+}
