@@ -333,6 +333,11 @@ export default function TableCreate() {
                 <Button variant="outline" type="button" onClick={() => router(-1)}>
                   Cancel
                 </Button>
+                <div className="flex justify-center gap-2">
+                <Button type="button" variant="outline" onClick={addField} className=" flex items-center " >
+                      <Plus className="h-3 w-3" />
+                      <Label className="relative top-[-0.5px]">Add Field</Label>
+                    </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <span className="flex items-center">
@@ -365,6 +370,7 @@ export default function TableCreate() {
                     </span>
                   )}
                 </Button>
+                </div>
               </CardFooter>
             </form>
           </Form>

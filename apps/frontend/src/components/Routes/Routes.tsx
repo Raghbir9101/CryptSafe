@@ -13,7 +13,6 @@ import { isAuthenticated } from "../Services/AuthService";
 import Home from "../Home/Home";
 import About from "../About/About";
 import Contact from "../Contact/Contact";
-import ForgotPassword from "../ForgetPassword/ForgetPassword";
 import ResetPassword from "../ResetPassword.tsx/ResetPassword";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -30,7 +29,7 @@ export default function AllRoutes() {
             <Route path='/about' element={<About />} />
             <Route path='/contact' element={<Contact />} />
             <Route path='/login' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <Login />} />
-            <Route path='/forgot/password' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <ForgotPassword />} />
+            <Route path='/forgot/password' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <ResetPassword />} />
             <Route path='/reset/password' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <ResetPassword />} />
             <Route path='/register' element={isAuthenticated.value ? <Navigate to={"/tables"} /> : <Register />} />
 
