@@ -1,8 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler";
 import dotenv from "dotenv";
 import { HttpStatusCodes } from "../utils/errorCodes";
-import Table from "../models/table.model";
-import Data from "../models/data.model";
+import Table, { TableBackup } from "../models/table.model";
+import Data, { DataBackup } from "../models/data.model";
 import { TableInterface, SharedWithInterface, FieldPermissionInterface } from "@repo/types";
 import { encrypt, decrypt } from "../utils/encryption";
 dotenv.config();
@@ -80,7 +80,7 @@ export default class TableController {
 
     static createTable = asyncHandler(async (req, res): Promise<any> => {
         const { name, fields, description } = req.body;
-        console.log(req.body, 'req.body');
+
         if (!name || !fields || !description) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -100,6 +100,9 @@ export default class TableController {
         };
 
         const table = await Table.create(encryptedData);
+        TableBackup.create({...encryptedData, _id:table?._id}).then(() => {
+            console.log("Table backup created successfully");
+        })
         res.status(HttpStatusCodes.CREATED).json({ table, message: "Table created successfully" });
     });
 
@@ -127,6 +130,13 @@ export default class TableController {
             encryptedData,
             { new: true }
         );
+        TableBackup.findOneAndUpdate(
+            { createdBy: req?.user?._id, _id: req.params.id },
+            encryptedData,
+            { new: true }
+        ).then(() => {
+            console.log("Table backup updated successfully");
+        });
         res.status(HttpStatusCodes.OK).json({ table, message: "Table updated successfully!" });
     });
 
@@ -159,6 +169,13 @@ export default class TableController {
         }
 
         await table.save();
+        TableBackup.updateOne({ createdBy: req.user._id, _id: id }, {
+            $set: {
+                sharedWith: table.sharedWith
+            }
+        }, { new: true }).then(() => {
+            console.log("Table backup updated successfully");
+        });
         res.status(HttpStatusCodes.OK).json({ table, message: "Table sharing updated!" });
     });
 
@@ -210,7 +227,7 @@ export default class TableController {
     })
 
     static insertRow = asyncHandler(async (req, res): Promise<any> => {
-        const tableID = req.params.tableID;
+        const tableID = req.params.id;
         const { error } = await this.checkIsTableSharedWithUserAndAllowed(req, res);
         if (error) {
             return res.status(400).json({ message: error })
@@ -278,6 +295,9 @@ export default class TableController {
         }
 
         const row = await Data.create({ data, createdBy: req?.user?._id, tableID })
+        DataBackup.create({ data, createdBy: req?.user?._id, tableID, _id: row?._id }).then(() => {
+            console.log("Row backup created successfully");
+        })
         res.status(200).json({ row, message: "Row inserted successfully" })
     })
 
@@ -286,7 +306,7 @@ export default class TableController {
         if (error) {
             return res.status(400).json({ message: error })
         }
-        const { tableID, rowID } = req.params;
+        const { id: tableID, rowID } = req.params;
         const data = req.body;
 
         if (!tableID || !rowID) {
@@ -355,8 +375,24 @@ export default class TableController {
             { new: true }
         );
 
-        await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true })
+        DataBackup.findByIdAndUpdate(
+            rowID,
+            {
+                $set: {
+                    data,
+                    updatedBy: req?.user?._id,
+                    updatedAt: new Date()
+                }
+            },
+            { new: true }
+        ).then((res) => {
+            console.log("Row backup updated successfully");
+        })
 
+        await Table.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true })
+        TableBackup.findByIdAndUpdate(tableID, { updatedBy: req?.user?._id }, { new: true }).then(() => {
+            console.log("Table backup updated successfully");
+        })
 
         if (!row) {
             return res.status(404).json({ message: "Row not found" })

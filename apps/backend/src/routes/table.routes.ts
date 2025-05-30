@@ -7,9 +7,9 @@ tableRouter.post("/", TableController.createTable);
 tableRouter.patch("/:id", TableController.updateTable);
 tableRouter.patch("/share/:id", TableController.shareTable);
 tableRouter.route("/").get(TableController.getAllTableData)
-tableRouter.post("/insert/:tableID", TableController.insertRow);
-tableRouter.patch("/update/:tableID/:rowID", TableController.updateRow);
-tableRouter.delete("/delete/:tableID/:rowID", TableController.deleteRow);
+tableRouter.post("/insert/:id", TableController.insertRow);
+tableRouter.patch("/update/:id/:rowID", TableController.updateRow);
+tableRouter.delete("/delete/:id/:rowID", TableController.deleteRow);
 tableRouter.delete("/:id", TableController.deleteTable)
 
 export default tableRouter;

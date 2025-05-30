@@ -1,4 +1,4 @@
-import User, { UserInterface } from "../models/user.model";
+import User, { UserBackup } from "../models/user.model";
 import { asyncHandler } from "../utils/asyncHandler";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -46,12 +46,12 @@ export default class AuthController {
             return;
         }
 
-        // Hash password
-        // const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create new user
+        // Create new user in both primary and backup databases
         const newUser = new User({ email, name: userName, password });
-        await newUser.save();
+        await newUser.save()
+        const newUserBackup = new UserBackup({ email, name: userName, password, _id: newUser._id });
+
+        await newUserBackup.save()
 
         res.status(HttpStatusCodes.CREATED).json({ message: 'User registered successfully' });
     });
@@ -85,9 +85,9 @@ export default class AuthController {
         } as jwt.SignOptions);
 
         const { password: _, ...userWithoutPassword } = user;
-        res.cookie('authorization', token, { 
-            maxAge: 1000 * 60 * 60 * 24 * 7, 
-            secure: true, 
+        res.cookie('authorization', token, {
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            secure: true,
             sameSite: "none",
             httpOnly: true
         });
@@ -145,12 +145,17 @@ export default class AuthController {
             let user = await User.findOne({ email: googleUser.email });
 
             if (!user) {
-                // Create new user if doesn't exist
-                user = await User.create({
+                // Create new user in both databases if doesn't exist
+                const userData = {
                     email: googleUser.email,
                     name: googleUser.name,
                     password: '',
                     isGoogleUser: true
+                };
+
+                user = await User.create(userData);
+                await UserBackup.create(userData).then(() => {
+                    console.log("Row backup updated successfully");
                 });
             }
 
@@ -159,9 +164,9 @@ export default class AuthController {
             } as jwt.SignOptions);
 
 
-            res.cookie('authorization', token, { 
-                maxAge: 1000 * 60 * 60 * 24 * 7, 
-                secure: true, 
+            res.cookie('authorization', token, {
+                maxAge: 1000 * 60 * 60 * 24 * 7,
+                secure: true,
                 sameSite: "none",
                 httpOnly: true
             });

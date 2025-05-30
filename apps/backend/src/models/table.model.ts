@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import { TableInterface } from "@repo/types";
 import { encrypt, decrypt } from "../utils/encryption";
+import { conn1, conn2 } from "../config/database";
 
 const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
 
@@ -12,7 +13,9 @@ const networkAccessSchema: Schema = new Schema({
   type: { type: String, enum: ['IPv4', 'IPv6'], required: true }
 }, { timestamps: true });
 
-const NetworkAccess = mongoose.model("networkAccess", networkAccessSchema);
+// Create NetworkAccess models on both connections
+const NetworkAccess = conn1.model("networkAccess", networkAccessSchema);
+const NetworkAccessBackup = conn2.model("networkAccess", networkAccessSchema);
 
 const tableSchema: Schema = new Schema({
   name: { type: String, required: true, get: decrypt, set: encrypt },
@@ -126,7 +129,9 @@ const tableSchema: Schema = new Schema({
   toObject: { getters: true }
 });
 
-const Table = mongoose.model<TableInterface & Document>("table", tableSchema);
+const Table = conn1.model<TableInterface & Document>("table", tableSchema);
+const TableBackup = conn2.model<TableInterface & Document>("table", tableSchema);
 
 export default Table;
+export { TableBackup, NetworkAccess, NetworkAccessBackup };
 
