@@ -4,7 +4,7 @@ import { UserInterface } from "../models/user.model";
 type RequestWithUser = Request & { [key: string]: any, user?: UserInterface, userIP?: string };
 
 export const asyncHandler = (
-  fn: (req: RequestWithUser, res: Response, next: NextFunction) => Promise<void>
+  fn: (req: RequestWithUser, res: Response, next: NextFunction) => Promise<any>
 ) => {
   return (req: RequestWithUser, res: Response, next: NextFunction) => {
     fn(req, res, next).catch(async (error) => {

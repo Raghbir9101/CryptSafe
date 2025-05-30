@@ -10,10 +10,23 @@ import { OAuth2Client } from 'google-auth-library';
 import { config } from '../config';
 import { google } from 'googleapis';
 import axios from 'axios';
+import OTP from '../models/otp.model';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
+
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 const client = new OAuth2Client(config.google.clientId);
+
+// Create a transporter for sending emails
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
 
 export default class AuthController {
 
@@ -167,4 +180,110 @@ export default class AuthController {
         }
     });
 
+    // Generate a random 6-digit OTP
+    private static generateOTP(): string {
+        return crypto.randomInt(100000, 999999).toString();
+    }
+
+    // Send OTP via email
+    private static async sendOTPEmail(email: string, otp: string): Promise<void> {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Password Reset OTP',
+            html: `
+                <h1>Password Reset Request</h1>
+                <p>Your OTP for password reset is: <strong>${otp}</strong></p>
+                <p>This OTP will expire in 10 minutes.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+    }
+
+    // Send OTP for password reset
+    static sendResetOTP = asyncHandler(async (req: Request, res: Response) => {
+        const { email } = req.body;
+
+        // Check if user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            res.status(HttpStatusCodes.NOT_FOUND).json({ message: 'User not found' });
+            return;
+        }
+
+        // Generate OTP
+        const otp = this.generateOTP();
+
+        // Save OTP to database
+        await OTP.create({
+            email,
+            otp,
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+        });
+
+        // Send OTP via email
+        await this.sendOTPEmail(email, otp);
+
+        res.status(HttpStatusCodes.OK).json({ message: 'OTP sent successfully' });
+    });
+
+    // Verify OTP
+    static verifyOTP = asyncHandler(async (req: Request, res: Response) => {
+        const { email, otp } = req.body;
+
+        // Find the OTP in database
+        const otpRecord = await OTP.findOne({
+            email,
+            otp,
+            isUsed: false,
+            expiresAt: { $gt: new Date() }
+        });
+
+        if (!otpRecord) {
+            res.status(HttpStatusCodes.BAD_REQUEST).json({ message: 'Invalid or expired OTP' });
+            return;
+        }
+
+        // Mark OTP as used
+        otpRecord.isUsed = true;
+        await otpRecord.save();
+
+        res.status(HttpStatusCodes.OK).json({ message: 'OTP verified successfully' });
+    });
+
+    // Reset password
+    static resetPassword = asyncHandler(async (req: Request, res: Response) => {
+        const { email, otp, newPassword } = req.body;
+
+        // Verify OTP again
+        const otpRecord = await OTP.findOne({
+            email,
+            otp,
+            isUsed: true,
+            expiresAt: { $gt: new Date() }
+        });
+
+        if (!otpRecord) {
+            res.status(HttpStatusCodes.BAD_REQUEST).json({ message: 'Invalid or expired OTP' });
+            return;
+        }
+
+        // Find user and update password
+        const user = await User.findOne({ email });
+        if (!user) {
+            res.status(HttpStatusCodes.NOT_FOUND).json({ message: 'User not found' });
+            return;
+        }
+
+        // Update password
+        user.password = newPassword;
+        await user.save();
+
+        // Delete all OTPs for this email
+        await OTP.deleteMany({ email });
+
+        res.status(HttpStatusCodes.OK).json({ message: 'Password reset successful' });
+    });
 }
