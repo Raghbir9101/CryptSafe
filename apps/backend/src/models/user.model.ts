@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from 'bcryptjs';
 import { UserInterface } from "@repo/types";
+import { conn1, conn2 } from "../config/database";
 
 export interface IUser extends Document {
   email: string;
@@ -55,7 +56,8 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model<IUser>("user", userSchema);
+const User = conn1.model<IUser>("user", userSchema);
+const UserBackup = conn2.model<IUser>("user", userSchema);
 
 export default User;
-export type { UserInterface };
+export { UserBackup, UserInterface };

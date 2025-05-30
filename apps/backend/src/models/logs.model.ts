@@ -1,15 +1,19 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { UserInterface } from "@repo/types";
+import { LogInterface } from "@repo/types";
+import { conn1, conn2 } from "../config/database";
 
-
-const userSchema: Schema = new Schema({
-  userName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  isAdmin: { type: Boolean, default: false },
+const logSchema: Schema = new Schema({
+  message: { type: String, required: true },
+  level: { type: String, required: true },
+  timestamp: { type: Date, required: true },
+  stack: { type: String },
+  fileName: { type: String },
+  lineNumber: { type: Number },
+  columnNumber: { type: Number }
 }, { timestamps: true });
 
-const User = mongoose.model<UserInterface & Document>("user", userSchema);
+const Log = conn1.model<LogInterface & Document>("log", logSchema);
+const LogBackup = conn2.model<LogInterface & Document>("log", logSchema);
 
-export default User;
-export type { UserInterface };
+export default Log;
+export { LogBackup };
