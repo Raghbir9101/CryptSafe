@@ -395,7 +395,7 @@ export default function TableCreate() {
                       <Plus className="h-3 w-3" />
                       <Label className="relative top-[-0.5px]">Add Field</Label>
                     </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="bg-[#4161ed] hover:bg-[#1f3fcc]">
                   {isSubmitting ? (
                     <span className="flex items-center">
                       <svg

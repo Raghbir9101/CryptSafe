@@ -196,7 +196,7 @@ export default function Tables() {
           <TooltipTrigger asChild>
             <Button
               onClick={() => nav('/tables/create')}
-              className="fixed cursor-pointer bottom-6 right-6 bg-primary hover:bg-primary/90 text-white transition-colors duration-200 shadow-lg rounded-full h-12 w-12 flex items-center justify-center"
+              className="fixed cursor-pointer bottom-6 right-6 bg-primary hover:bg-primary/90 text-white transition-colors duration-200 shadow-lg rounded-full h-12 w-12 flex items-center justify-center bg-[#4161ed] hover:bg-[#1f3fcc] "
             >
               <span className="text-3xl">+</span>
             </Button>

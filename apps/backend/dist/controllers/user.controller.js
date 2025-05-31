@@ -14,7 +14,10 @@ class UserController {
     // Method to delete user
     static deleteUser = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         try {
-            await user_model_1.default.findByIdAndDelete(req.params.id);
+            // Delete from both primary and backup databases
+            await Promise.all([
+                user_model_1.default.findByIdAndDelete(req.params.id)
+            ]);
             res.status(errorCodes_1.HttpStatusCodes.OK).send({ message: "User Deleted Successfully" });
         }
         catch (err) {

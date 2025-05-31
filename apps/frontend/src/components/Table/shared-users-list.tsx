@@ -537,6 +537,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                           { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv4' }
                         ]);
                       }}
+                      className="bg-[#4161ed] hover:bg-[#1f3fcc]"
                     >
                       Add IPv4 Access
                     </Button>
@@ -547,6 +548,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                           { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv6' }
                         ]);
                       }}
+                      className="bg-[#4161ed] hover:bg-[#1f3fcc]"
                     >
                       Add IPv6 Access
                     </Button>
@@ -559,7 +561,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
               <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleUpdateUser}>Save Changes</Button>
+              <Button className="bg-[#4161ed] hover:bg-[#1f3fcc]" onClick={handleUpdateUser}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

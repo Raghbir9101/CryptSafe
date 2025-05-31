@@ -475,6 +475,7 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                       { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv4' }
                     ]);
                   }}
+                  className="bg-[#4161ed] hover:bg-[#1f3fcc]"
                 >
                   Add IPv4 Access
                 </Button>
@@ -485,6 +486,7 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                       { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv6' }
                     ]);
                   }}
+                  className="bg-[#4161ed] hover:bg-[#1f3fcc]"
                 >
                   Add IPv6 Access
                 </Button>

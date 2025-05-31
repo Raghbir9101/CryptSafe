@@ -106,9 +106,9 @@ export default function SharePage() {
           <CardDescription>Share your table with other users and set column-level permissions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6 ">
             <h3 className="text-lg font-medium">Shared Users</h3>
-            <Button className="cursor-pointer" onClick={() => setIsModalOpen(true)}>Share with User</Button>
+            <Button className="cursor-pointer bg-[#4161ed] hover:bg-[#1f3fcc]" onClick={() => setIsModalOpen(true)}>Share with User</Button>
           </div>
 
           <SharedUsersList

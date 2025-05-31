@@ -33,11 +33,15 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DataBackup = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const database_1 = require("../config/database");
 const dataSchema = new mongoose_1.Schema({
     createdBy: { type: mongoose_1.default.Types.ObjectId, ref: "user", required: true },
     tableID: { type: mongoose_1.default.Types.ObjectId, ref: "table", required: true },
     data: { type: Object, required: true },
 }, { timestamps: true });
-const Data = mongoose_1.default.model("data", dataSchema);
+const Data = database_1.conn1.model("data", dataSchema);
+const DataBackup = database_1.conn2.model("data", dataSchema);
+exports.DataBackup = DataBackup;
 exports.default = Data;
