@@ -33,6 +33,7 @@ export default class AuthController {
     // Method to register a new user
     static registerUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
         const { email, userName, password } = req.body;
+        console.log(req.body)
 
         if (!email || !userName || !password) {
             res.status(HttpStatusCodes.BAD_REQUEST).json({ message: 'Username, email and password fields are required' });
