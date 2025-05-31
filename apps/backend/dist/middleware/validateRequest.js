@@ -12,7 +12,7 @@ const validateRequest = (schema) => {
             next();
         }
         catch (error) {
-            return res.status(400).json({ error: 'Validation failed' });
+            res.status(400).json({ error: 'Validation failed' });
         }
     };
 };
