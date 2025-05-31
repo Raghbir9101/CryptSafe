@@ -43,7 +43,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
     }))
 
     // Set other user properties
-    setTablePermissions(user.tablePermissions)
+    setTablePermissions(user.tablePermissions || { edit: false, delete: false })
     setRowsPerPageLimit(user.rowsPerPageLimit)
     setWorkingTimeAccess(user.workingTimeAccess)
     setNetworkAccess(user.networkAccess)
@@ -168,14 +168,14 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
   console.log(fieldPermissions)
 
   return (
-    <>
+    <div className="rounded-lg border bg-white text-card-foreground shadow-[0_8px_30px_rgb(0,0,0,0.18)] max-h-[calc(100vh-12rem)] overflow-auto">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Permissions</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+        <TableRow>
+            <TableHead className="text-white"><b>Email</b></TableHead>
+            <TableHead className="text-white"><b>Status</b></TableHead>
+            <TableHead className="text-white"><b>Permissions</b></TableHead>
+            <TableHead className="text-right text-white"><b>Actions</b></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -564,7 +564,7 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </div>
   )
 }
 

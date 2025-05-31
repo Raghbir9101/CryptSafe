@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import { TableInterface } from "@repo/types";
-import { encrypt, decrypt } from "../utils/encryption";
-import { conn1, conn2 } from "../config/database";
+import { conn1 } from "../config/database";
 
 const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
 
@@ -13,17 +12,15 @@ const networkAccessSchema: Schema = new Schema({
   type: { type: String, enum: ['IPv4', 'IPv6'], required: true }
 }, { timestamps: true });
 
-// Create NetworkAccess models on both connections
 const NetworkAccess = conn1.model("networkAccess", networkAccessSchema);
-const NetworkAccessBackup = conn2.model("networkAccess", networkAccessSchema);
 
 const tableSchema: Schema = new Schema({
-  name: { type: String, required: true, get: decrypt, set: encrypt },
-  description: { type: String, required: true, get: decrypt, set: encrypt },
+  name: { type: String, required: true },
+  description: { type: String, required: true },
   fields: {
     type: [
       {
-        name: { type: String, required: true, get: decrypt, set: encrypt },
+        name: { type: String, required: true },
         unique: { type: Boolean, required: true },
         type: {
           type: String,
@@ -32,18 +29,18 @@ const tableSchema: Schema = new Schema({
         },
         required: { type: Boolean, required: true },
         hidden: { type: Boolean, required: true },
-        options: { type: [String], required: false, get: decrypt, set: encrypt },
+        options: { type: [String], required: false },
       }
     ], required: true
   },
   sharedWith: {
     type: [{
-      email: { type: String, required: false, get: decrypt, set: encrypt },
+      email: { type: String, required: false },
       fieldPermission: {
         type: [{
-          fieldName: { type: String, get: decrypt, set: encrypt },
+          fieldName: { type: String, },
           permission: { type: String, enum: ["READ", "WRITE", "NONE"] },
-          filter: { type: Array, default: [], get: decrypt, set: encrypt }
+          filter: { type: Array, default: [] }
         }],
       },
       tablePermissions: {
@@ -60,9 +57,7 @@ const tableSchema: Schema = new Schema({
           },
           accessTime: {
             type: [[String]],
-            default: [],
-            get: decrypt,
-            set: encrypt
+            default: []
           },
           enabled: {
             type: Boolean,
@@ -123,15 +118,8 @@ const tableSchema: Schema = new Schema({
     type: Types.ObjectId,
     ref: "user"
   },
-}, { 
-  timestamps: true,
-  toJSON: { getters: true },
-  toObject: { getters: true }
-});
+}, { timestamps: true });
 
 const Table = conn1.model<TableInterface & Document>("table", tableSchema);
-const TableBackup = conn2.model<TableInterface & Document>("table", tableSchema);
 
 export default Table;
-export { TableBackup, NetworkAccess, NetworkAccessBackup };
-
