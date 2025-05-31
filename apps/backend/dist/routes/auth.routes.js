@@ -10,6 +10,7 @@ const auth_validation_1 = require("../validations/auth.validation");
 const router = (0, express_1.Router)();
 router.post("/register", auth_controller_1.default.registerUser);
 router.post("/login", auth_controller_1.default.loginUser);
+router.get("/logout", auth_controller_1.default.logoutUser);
 // Password reset routes
 router.post("/send-otp", (0, validateRequest_1.validateRequest)(auth_validation_1.sendOtpSchema), auth_controller_1.default.sendResetOTP);
 router.post("/verify-otp", (0, validateRequest_1.validateRequest)(auth_validation_1.verifyOtpSchema), auth_controller_1.default.verifyOTP);

@@ -8,7 +8,7 @@ const router = Router();
 router.post("/register", AuthController.registerUser);
 
 router.post("/login", AuthController.loginUser);
-
+router.get("/logout", AuthController.logoutUser);
 // Password reset routes
 router.post("/send-otp", validateRequest(sendOtpSchema), AuthController.sendResetOTP);
 router.post("/verify-otp", validateRequest(verifyOtpSchema), AuthController.verifyOTP);
