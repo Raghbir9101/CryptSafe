@@ -136,7 +136,7 @@ const About = () => {
                     </div>
 
                     {/* Technical Architecture */}
-                    <div className="bg-white rounded-3xl p-12 shadow-lg border border-gray-100 mb-20">
+                    {/* <div className="bg-white rounded-3xl p-12 shadow-lg border border-gray-100 mb-20">
                         <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">Technical Architecture</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {technologies.map((tech, index) => (
@@ -146,10 +146,10 @@ const About = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Compliance & Standards */}
-                    <div className="text-center mb-20">
+                    {/* <div className="text-center mb-20">
                         <h2 className="text-4xl font-bold mb-6 text-gray-900">Compliance & Standards</h2>
                         <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
                             CryptSafe is designed to meet the most stringent security and compliance requirements
@@ -185,7 +185,7 @@ const About = () => {
                                 </Card>
                             ))}
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Future Roadmap */}
                     <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-12 text-white mb-20">
