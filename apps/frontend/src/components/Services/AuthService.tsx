@@ -6,25 +6,31 @@ import Cookies from "js-cookie"
 interface AuthState {
     loggedInUser: UserInterface | null,
     status: 'idle' | 'loading' | 'error' | 'success',
+    isInitialized: boolean
 }
 
 export const Auth = signal<AuthState>({
     loggedInUser: null,
     status: 'idle',
+    isInitialized: false
 })
 
 export const isAuthenticated = computed(() => {
-    return Auth.value.loggedInUser !== null
+    return Auth.value.loggedInUser !== null && Auth.value.isInitialized
+})
+
+export const isInitialized = computed(() => {
+    return Auth.value.isInitialized
 })
 
 export const login = async (email: string, password: string) => {
     Auth.value = { ...Auth.value, status: 'loading' }
     try {
         const response = await api.post('/auth/login', { email, password }, { withCredentials: true });
-        Auth.value = { ...Auth.value, loggedInUser: response.data.user, status: 'success' }
+        Auth.value = { ...Auth.value, loggedInUser: response.data.user, status: 'success', isInitialized: true }
         return response.data
     } catch (error) {
-        Auth.value = { ...Auth.value, status: 'error' }
+        Auth.value = { ...Auth.value, status: 'error', isInitialized: true }
         throw error
     }
 }
@@ -41,22 +47,27 @@ export const register = async (email: string, password: string, userName: string
 export const getUserAfterRefresh = async () => {
     try {
         const response = await api.get('/users/getUser', { withCredentials: true });
-        Auth.value = { ...Auth.value, loggedInUser: response.data }
+        Auth.value = { ...Auth.value, loggedInUser: response.data, isInitialized: true }
     } catch (error) {
-        Auth.value = { ...Auth.value, loggedInUser: null }
+        Auth.value = { ...Auth.value, loggedInUser: null, isInitialized: true }
     }
 }
 
 export const logout = async () => {
     try {
-        Auth.value = { ...Auth.value, loggedInUser: null }
-        Cookies.set('authorization', '')
+        await api.get('/auth/logout');
+        // Clear the auth state
+        Auth.value = { loggedInUser: null, status: 'idle', isInitialized: true };
+        // Clear any cookies
+        Cookies.remove('authorization');
+        return { success: true };
     } catch (error) {
-        return error
+        // Even if the API call fails, clear the local state
+        Auth.value = { loggedInUser: null, status: 'idle', isInitialized: true };
+        Cookies.remove('authorization');
+        return { success: false, error };
     }
 }
-
-
 
 export const loginWithGoogle = async (token: string): Promise<any> => {
     try {

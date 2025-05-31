@@ -39,18 +39,18 @@ const Home = () => {
             description: "Share encrypted data between users with permission-controlled access and expiration.",
             badge: "Controlled Sharing"
         },
-        {
-            icon: Eye,
-            title: "Audit & Monitoring",
-            description: "Complete audit trail with real-time alerts and suspicious behavior detection.",
-            badge: "Full Visibility"
-        }
+        // {
+        //     icon: Eye,
+        //     title: "Audit & Monitoring",
+        //     description: "Complete audit trail with real-time alerts and suspicious behavior detection.",
+        //     badge: "Full Visibility"
+        // }
     ];
 
     const useCases = [
         "Enterprises with strict confidential data access rules",
         "Remote teams requiring location/IP-based document access",
-        "Organizations with HIPAA, GDPR compliance requirements",
+        // "Organizations with HIPAA, GDPR compliance requirements",
         "Admins needing full control over user sessions"
     ];
 
@@ -190,7 +190,7 @@ const Home = () => {
                             <Button
                                 size="lg"
                                 variant="outline"
-                                className="px-8 py-4 border-white text-white hover:bg-white hover:text-blue-600 font-semibold rounded-full transition-all duration-300"
+                                className="px-8 py-4 border-white text-blue-600 hover:bg-white hover:text-blue-600 font-semibold rounded-full transition-all duration-300"
                                 onClick={() => navigate("/login")}
                             >
                                 Start Free Trial

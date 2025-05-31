@@ -95,6 +95,16 @@ export default class AuthController {
         res.status(HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
 
+    static logoutUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+        res.cookie('authorization', null, {
+            secure: true,
+            sameSite: "none",
+            httpOnly: true
+        });
+
+        res.status(HttpStatusCodes.OK).json({ message: 'Logout successful' });
+    });
+
     static getGoogleAuthUrl = asyncHandler(async (req: Request, res: Response): Promise<void> => {
         try {
             const params = {

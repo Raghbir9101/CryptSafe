@@ -18,9 +18,22 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    navigate("/login");
-    logout();
+  const handleLogout = async() => {
+    try {
+      const result = await logout();
+      if (result.success) {
+        // Immediately navigate to login
+        navigate("/login", { replace: true });
+      } else {
+        console.error("Logout failed:", result.error);
+        // Still try to navigate even if logout fails
+        navigate("/login", { replace: true });
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still try to navigate even if logout fails
+      navigate("/login", { replace: true });
+    }
   };
 
   const navItems = [

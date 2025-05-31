@@ -112,6 +112,14 @@ class AuthController {
         });
         res.status(errorCodes_1.HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
+    static logoutUser = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
+        res.cookie('authorization', null, {
+            secure: true,
+            sameSite: "none",
+            httpOnly: true
+        });
+        res.status(errorCodes_1.HttpStatusCodes.OK).json({ message: 'Logout successful' });
+    });
     static getGoogleAuthUrl = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         try {
             const params = {
