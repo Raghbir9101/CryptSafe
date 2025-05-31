@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { conn1 } from "../config/database";
 
 export interface IOTP extends Document {
     email: string;
@@ -32,6 +33,6 @@ const otpSchema: Schema = new Schema({
 // Index for faster queries and automatic cleanup
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const OTP = mongoose.model<IOTP>("otp", otpSchema);
+const OTP = conn1.model<IOTP>("otp", otpSchema);
 
 export default OTP; 

@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +51,7 @@ interface TableField {
 interface TableRow {
   _id: string;
   data: Record<string, any>;
+  createdAt: string;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -259,8 +266,20 @@ export default function TableContent() {
     return value;
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', '');
+  };
+
   const renderInputField = (field: TableField, value: any, onChange: (value: any) => void) => {
-    const baseInputClass = "h-9 w-full px-2 text-sm"; // Consistent height and padding
+    const baseInputClass = "h-8 w-full px-2 text-sm"; // Reduced from h-9 to h-8
 
     switch (field.type) {
       case 'TEXT':
@@ -406,173 +425,259 @@ export default function TableContent() {
     setCurrentUserTableContent(user);
   }, [tableData])
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Table Content</h2>
-        {canAddRow() && (
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Row
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Row</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                {tableFields.map((field) => (
-                  <div key={field.name} className="grid gap-2">
-                    <Label htmlFor={field.name}>
-                      {field.name}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
-                    {field.description && (
-                      <p className="text-sm text-muted-foreground">{field.description}</p>
-                    )}
-                    {hasWritePermission(field.name) ? (
-                      renderInputField(field, newRow[field.name], (value) =>
-                        handleInputChange(null, field.name, value)
-                      )
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        You don't have permission to edit this field
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddRow}>
-                    Add Row
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-
-      <div className="rounded-md border">
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow>
-              {tableFields?.filter((field) => {
-                return hasShowPermission(field.name);
-              })?.map((field) => (
-                <TableHead key={field?.name} className="w-[200px]">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate">{field.name}</span>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleSort(field.name)}
-                      >
-                        <ArrowUpDown className="h-4 w-4" />
-                        {sortConfig.field === field.name && (
-                          <span className="ml-1">
-                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                          </span>
-                        )}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <Search className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-[200px]">
-                          <div className="p-2">
-                            <Input
-                              placeholder={`Filter ${field.name}...`}
-                              value={filters[field.name] || ''}
-                              onChange={(e) => handleFilter(field.name, e.target.value)}
-                              className="w-full"
-                            />
-                          </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+    <div className='container mx-auto px-6 py-20'>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold tracking-tight mb-6">Table Content</h1>
+          {canAddRow() && (
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+              <DialogTrigger asChild>
+                <Button className='bg-[#405fe8] hover:bg-[#1f3fcc] cursor-pointer'>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Record
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add New Row</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  {tableFields.map((field) => (
+                    <div key={field.name} className="grid gap-2">
+                      <Label htmlFor={field.name}>
+                        {field.name}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                      </Label>
+                      {field.description && (
+                        <p className="text-sm text-muted-foreground">{field.description}</p>
+                      )}
+                      {hasWritePermission(field.name) ? (
+                        renderInputField(field, newRow[field.name], (value) =>
+                          handleInputChange(null, field.name, value)
+                        )
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          You don't have permission to edit this field
+                        </div>
+                      )}
                     </div>
+                  ))}
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddRow}>
+                      Add Record
+                    </Button>
                   </div>
-                </TableHead>
-              ))}
-              {hasAnyWritePermission() && <TableHead className="w-[100px]">Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {getSortedAndFilteredRows().map((row) => (
-              <TableRow key={row._id}>
-                {tableFields?.filter((field) => hasShowPermission(field.name))
-                  .map((field) => (
-                    <TableCell key={field.name} className="w-[200px] p-0">
-                      {editingRow === row._id && hasWritePermission(field.name) ? (
-                        <div className="px-4 py-2">
-                          {renderInputField(
-                            field,
-                            row.data[field.name],
-                            (value) => handleInputChange(row._id, field.name, value)
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-white text-card-foreground shadow-[0_8px_30px_rgb(0,0,0,0.18)] max-h-[calc(100vh-12rem)] overflow-auto">
+          <div className="relative">
+            <Table className="table-fixed">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px] text-white">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-white"> <b>Created At</b></span>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-white"
+                          onClick={() => handleSort('createdAt')}
+                        >
+                          {sortConfig.field === 'createdAt' ? (
+                            sortConfig.direction === 'asc' ? (
+                              <ArrowUpDown className="h-4 w-4 rotate-180" />
+                            ) : sortConfig.direction === 'desc' ? (
+                              <ArrowUpDown className="h-4 w-4" />
+                            ) : (
+                              <ArrowUpDown className="h-4 w-4 opacity-50" />
+                            )
+                          ) : (
+                            <ArrowUpDown className="h-4 w-4 opacity-50" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </TableHead>
+                  {tableFields?.filter((field) => {
+                    return hasShowPermission(field.name);
+                  })?.map((field) => (
+                    <TableHead key={field?.name} className="w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-white"> <b>{field.name}</b></span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-white"
+                            onClick={() => handleSort(field.name)}
+                          >
+                            {sortConfig.field === field.name ? (
+                              sortConfig.direction === 'asc' ? (
+                                <ArrowUpDown className="h-4 w-4 rotate-180" />
+                              ) : sortConfig.direction === 'desc' ? (
+                                <ArrowUpDown className="h-4 w-4" />
+                              ) : (
+                                <ArrowUpDown className="h-4 w-4 opacity-50" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="h-4 w-4 opacity-50" />
+                            )}
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-transparent">
+                                <Search className="h-4 w-4 text-white" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[200px]">
+                              <div className="p-2">
+                                <Input
+                                  placeholder={`Filter ${field.name}...`}
+                                  value={filters[field.name] || ''}
+                                  onChange={(e) => handleFilter(field.name, e.target.value)}
+                                  className="w-full"
+                                />
+                              </div>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </TableHead>
+                  ))}
+                  {hasAnyWritePermission() && (
+                    <TableHead className="w-[100px] text-white sticky right-0 bg-[#405fe8] z-10">
+                      <b>Actions</b>
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {getSortedAndFilteredRows().map((row) => (
+                  <TableRow key={row._id}>
+                    <TableCell className="w-[200px]">
+                      <div className="px-2 h-[24px] flex items-center">
+                        <span className="truncate">
+                          {formatTimestamp(row.createdAt)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    {tableFields?.filter((field) => hasShowPermission(field.name))
+                      .map((field) => (
+                        <TableCell key={field.name} className="w-[200px]">
+                          {editingRow === row._id && hasWritePermission(field.name) ? (
+                            <div className="px-2">
+                              {renderInputField(
+                                field,
+                                row.data[field.name],
+                                (value) => handleInputChange(row._id, field.name, value)
+                              )}
+                            </div>
+                          ) : (
+                            <div className="px-2 h-[24px] flex items-center">
+                              <span className="truncate">
+                                {formatValue(row.data[field.name], field.type)}
+                              </span>
+                            </div>
+                          )}
+                        </TableCell>
+                      ))}
+                    {hasAnyWritePermission() && (
+                      <TableCell className="sticky right-0 bg-white z-10">
+                        <div className="flex items-center gap-2">
+                          {editingRow === row._id ? (
+                            <>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleSave(row._id)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Save className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Save changes</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={handleCancel}
+                                      className="cursor-pointer"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Cancel</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </>
+                          ) : (
+                            <>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEdit(row._id)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit record</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleDelete(row._id)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete record</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </>
                           )}
                         </div>
-                      ) : (
-                        <div className="px-4 py-2 h-[36px] flex items-center">
-                          <span className="truncate">
-                            {formatValue(row.data[field.name], field.type)}
-                          </span>
-                        </div>
-                      )}
-                    </TableCell>
-                  ))}
-                {hasAnyWritePermission() && (
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {editingRow === row._id ? (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleSave(row._id)}
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleCancel}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(row._id)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(row._id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
     </div>
+
   );
 }

@@ -99,7 +99,7 @@ export default function SharePage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-6 py-20">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Share Table: {table.name}</CardTitle>

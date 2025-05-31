@@ -36,7 +36,17 @@ const formSchema = z.object({
         options: z.string().optional(),
       }),
     )
-    .min(1, "At least one field is required"),
+    .min(1, "At least one field is required")
+    // .refine(
+    //   (fields) => {
+    //     const names = fields.map((field) => field.name.toLowerCase());
+    //     return new Set(names).size === names.length;
+    //   },
+    //   {
+    //     message: "Field names must be unique",
+    //     path: ["fields"],
+    //   }
+    // ),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -63,6 +73,41 @@ export default function TableCreate() {
     },
   })
 
+  // Add form-level validation for duplicate field names
+  const validateFieldNames = () => {
+    const fields = form.getValues("fields");
+    console.log(fields)
+    const fieldNames = fields.map(field => field.name.toLowerCase());
+    const seen = new Set();
+    const duplicates = [];
+
+    fieldNames.forEach((name, index) => {
+      if (name && seen.has(name)) {
+        duplicates.push(index);
+      }
+      seen.add(name);
+    });
+
+    if (duplicates.length > 0) {
+      const lastDuplicateIndex = duplicates[duplicates.length - 1];
+      
+      // Show toast immediately
+      toast.error("Duplicate Field Names", {
+        description: "Please ensure all field names are unique.",
+      });
+
+      // Focus on the last duplicate field
+      const inputElement = document.querySelector(`input[name="fields.${lastDuplicateIndex}.name"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select();
+      }
+
+      return false;
+    }
+    return true;
+  };
+
   // Get the fields from the form
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -79,15 +124,29 @@ export default function TableCreate() {
       hidden: false,
     })
   }
-
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true)
+    
+    // First check for empty field names
+    const emptyFields = data.fields.some(field => !field.name.trim());
+    if (emptyFields) {
+      toast.error("Empty Field Names", {
+        description: "Please fill in all field names.",
+      });
+      return;
+    }
+
+    // Then check for duplicates
+    if (!validateFieldNames()) {
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       // Here you would typically send the data to your API
       console.log("Table data:", {
         ...data,
-      })
+      });
 
       const postData = {
         name: data.name,
@@ -103,26 +162,24 @@ export default function TableCreate() {
       const res = await createTable(postData);
 
       if (res.status == "error") {
-        return toast(`Error creating table`, {
-          description: `There was an error creating your table. Please try again.`,
-        })
+        return toast.error("Error creating table", {
+          description: "There was an error creating your table. Please try again.",
+        });
       }
 
-
-      toast(`Table created successfully`, {
+      toast.success("Table created successfully", {
         description: `Table "${data.name}" has been created.`,
-      })
+      });
 
-      router("/tables")
+      router("/tables");
 
     } catch (error) {
-      console.error("Error creating table:", error)
-      toast(`Error creating table`, {
-        description: `There was an error creating your table. Please try again.`,
-      })
-
+      console.error("Error creating table:", error);
+      toast.error("Error creating table", {
+        description: "There was an error creating your table. Please try again.",
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
