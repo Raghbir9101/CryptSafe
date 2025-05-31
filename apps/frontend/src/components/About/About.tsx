@@ -21,8 +21,8 @@ const About = () => {
     const roadmapItems = [
         "End-to-end encrypted file storage",
         "Admin insights dashboard with charts/analytics",
-        "External SSO support (Google/Microsoft)",
-        "Mobile app with biometric authentication"
+        // "External SSO support (Google/Microsoft)",
+        // "Mobile app with biometric authentication"
     ];
 
     return (
