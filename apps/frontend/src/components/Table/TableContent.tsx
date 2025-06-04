@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SelectedTable } from '../Services/TableService';
 import { Auth } from '../Services/AuthService';
+import { decryptObjectValues, encryptObjectValues } from '../Services/encrption';
 
 interface TableField {
   name: string;
@@ -82,11 +83,17 @@ export default function TableContent() {
         api.get(`/tables/${id}`),
         api.get(`/tables/rows/${id}`)
       ]);
-      setTableFields(tableRes.data.fields);
-      setTableData(tableRes.data);
-      setRows(rowsRes.data);
+      const decryptedTable = decryptObjectValues(tableRes.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const decryptedRows = rowsRes.data.map((row: any) => ({
+        ...row,
+        data: decryptObjectValues(row.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls")
+      }));
+      console.log(decryptedTable,decryptedRows,'tableRes.data')
+      setTableFields(decryptedTable.fields);
+      setTableData(decryptedTable);
+      setRows(decryptedRows);
       // Initialize newRow with empty values for each field
-      const emptyRow = tableRes.data.fields.reduce((acc: Record<string, any>, field: TableField) => {
+          const emptyRow = decryptedTable.fields.reduce((acc: Record<string, any>, field: TableField) => {
         acc[field.name] = '';
         return acc;
       }, {});
@@ -157,8 +164,8 @@ export default function TableContent() {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
       });
-
-      await api.patch(`/tables/update/${id}/${rowId}`, processedData);
+      const encryptedData = encryptObjectValues(processedData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      await api.patch(`/tables/update/${id}/${rowId}`, encryptedData);
       setEditingRow(null);
       toast.success('Row updated successfully');
       fetchTableData(); // Refresh data to ensure consistency
@@ -221,9 +228,10 @@ export default function TableContent() {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
       });
-
-      const response = await api.post(`/tables/insert/${id}`, processedData);
-      setRows([...rows, response.data.row]);
+      const encryptedData = encryptObjectValues(processedData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const response = await api.post(`/tables/insert/${id}`, encryptedData);
+      const decryptedResponse = decryptObjectValues(response.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      setRows([...rows, decryptedResponse.row]);
 
       // Reset new row form
       setNewRow(tableFields.reduce((acc: Record<string, any>, field) => {
