@@ -64,8 +64,9 @@ export default function SharePage() {
     if (!table) return
 
     try {
+      const encryptedData = encryptObjectValues(updatedUser, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
       const res = await api.patch(`/tables/share/${tableId}`, {
-        sharedWith: updatedUser
+        sharedWith: encryptedData
       });
 
       if (res.data.error) {

@@ -5,7 +5,7 @@ import CryptoJS from "crypto-js";
 //   const json = JSON.stringify(data);
 //   return CryptoJS.AES.encrypt(json, secretKey).toString();
 // }
-const skipKeys = ["unique", "required", "hidden", "options"];
+const skipKeys = ["unique", "required", "hidden", "options","tablePermissions","enabled","fieldPermission","isBlocked","workingTimeAccess","restrictNetwork","restrictWorkingTime","_id","createdAt","updatedAt"];
 export function encryptObjectValues(obj: any, secretKey: string): any {
     if (Array.isArray(obj)) {
       return obj.map(item => encryptObjectValues(item, secretKey));
@@ -26,8 +26,6 @@ export function encryptObjectValues(obj: any, secretKey: string): any {
   }
   
 
-// Decrypts an AES-encrypted string
-const ENCRYPTED_PREFIX = "ENC:";
 
 export function decryptObjectValues(obj: any, secretKey: string): any {
   if (Array.isArray(obj)) {

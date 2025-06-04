@@ -9,7 +9,9 @@ const networkAccessSchema: Schema = new Schema({
   IP_ADDRESS: { type: String, required: true },
   enabled: { type: Boolean, default: true },
   comment: { type: String },
-  type: { type: String, enum: ['IPv4', 'IPv6'], required: true }
+  type: { type: String,
+    //  enum: ['IPv4', 'IPv6'],
+      required: true }
 }, { timestamps: true });
 
 const NetworkAccess = conn1.model("networkAccess", networkAccessSchema);
@@ -40,7 +42,10 @@ const tableSchema: Schema = new Schema({
       fieldPermission: {
         type: [{
           fieldName: { type: String, },
-          permission: { type: String, enum: ["READ", "WRITE", "NONE"] },
+          permission: { type: String,
+            //  enum: ["READ", "WRITE", "NONE"] ,
+            required: true
+          },
           filter: { type: Array, default: [] }
         }],
       },
