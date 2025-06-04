@@ -25,7 +25,8 @@ const tableSchema: Schema = new Schema({
         type: {
           type: String,
           required: true,
-          enum: validTypes,
+          // enum: any,
+          // enum: validTypes,
         },
         required: { type: Boolean, required: true },
         hidden: { type: Boolean, required: true },
@@ -52,7 +53,7 @@ const tableSchema: Schema = new Schema({
         type: [{
           day: {
             type: String,
-            enum: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
+            // enum: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
             required: true
           },
           accessTime: {

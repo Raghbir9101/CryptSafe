@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals-react';
 import { TableInterface } from '@repo/types';
 import { api } from '../../Utils/utils';
+import { decryptObjectValues } from './encrption';
 
 
 interface TableState {
@@ -19,7 +20,10 @@ export const getTables = async () => {
     Table.value = { ...Table.value, status: 'loading' }
     try {
         const response = await api.get('/tables', { withCredentials: true });
-        Table.value = { ...Table.value, data: response.data, status: 'success' }
+        console.log(response.data,'response.data')
+        const decryptedData = decryptObjectValues(response.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+        console.log(decryptedData,'decryptedData')
+        Table.value = { ...Table.value, data: decryptedData, status: 'success' }
         return response.data
     } catch (error) {
         Table.value = { ...Table.value, status: 'error' }
@@ -27,7 +31,7 @@ export const getTables = async () => {
     }
 }
 
-export const createTable = async (tableData: { name: string, fields: any, description: string }) => {
+export const createTable = async (tableData: any) => {
     Table.value = { ...Table.value, status: 'loading' }
     try {
         const response = await api.post('/tables', tableData, { withCredentials: true });

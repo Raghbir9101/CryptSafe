@@ -20,6 +20,7 @@ import { toast } from "sonner"
 import { createTable, updateTable } from "../Services/TableService"
 import { api } from "@/Utils/utils"
 import { TableInterface } from "@repo/types"
+import { decryptObjectValues, encryptObjectValues } from "../Services/encrption"
 
 // Define the field types
 const fieldTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"] as const
@@ -104,8 +105,8 @@ export default function TableUpdate() {
           }
         })
       }
-
-      const res = await updateTable(id, postData)
+      const encryptedData = encryptObjectValues(postData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const res = await updateTable(id, encryptedData)
       if (res.status == "error") {
         return toast(`Error creating table`, {
           description: `There was an error creating your table. Please try again.`,
@@ -132,9 +133,12 @@ export default function TableUpdate() {
 
   useEffect(() => {
     api.get<TableInterface>(`/tables/${id}`).then((res) => {
-      form.setValue("name", res.data.name ?? "")
-      form.setValue("description", res.data.description ?? "")
-      form.setValue("fields", (res.data.fields || []).map(item => {
+      console.log(res.data,'res.data')
+      const decryptedData = decryptObjectValues(res.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      console.log(decryptedData,'decryptedData')
+      form.setValue("name", decryptedData.name ?? "")
+      form.setValue("description", decryptedData.description ?? "")
+      form.setValue("fields", (decryptedData.fields || []).map(item => {
         return {
           ...item,
           options: ((item.options || []).join(","))

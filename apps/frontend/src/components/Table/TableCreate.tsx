@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom"
 import { Label } from "../ui/label"
 import { toast } from "sonner"
 import { createTable } from "../Services/TableService"
+import {  encryptObjectValues } from "../Services/encrption"
 
 // Define the field types
 const fieldTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"] as const
@@ -158,8 +159,9 @@ export default function TableCreate() {
           }
         })
       }
-
-      const res = await createTable(postData);
+      const encrypted = encryptObjectValues(postData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      console.log(encrypted,'entypted.')
+      const res = await createTable(encrypted);
 
       if (res.status == "error") {
         return toast.error("Error creating table", {
