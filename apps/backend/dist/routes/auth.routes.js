@@ -12,4 +12,8 @@ router.get("/logout", auth_controller_1.default.logoutUser);
 // Google OAuth routes
 router.get('/google/url', auth_controller_1.default.getGoogleAuthUrl);
 router.post('/google/callback', auth_controller_1.default.handleGoogleCallback);
+router.post("/send-otp", auth_controller_1.default.sendResetOTP);
+router.post("/verify-otp", auth_controller_1.default.verifyOTP);
+router.post("/reset-password", auth_controller_1.default.resetPassword);
+router.post("/initial-reset-password", auth_controller_1.default.initialPasswordReset);
 exports.default = router;
