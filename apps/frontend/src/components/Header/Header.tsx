@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Shield, Menu, X, Plus, LogOut, LogIn, Database, Home, Info, Mail } from "lucide-react";
-import { isAuthenticated, logout } from "../Services/AuthService";
+import { Shield, Menu, X, Plus, LogOut, LogIn, Database, Home, Info, Mail, Settings } from "lucide-react";
+import { isAuthenticated, logout, getUser } from "../Services/AuthService";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -104,6 +104,23 @@ export function Header() {
                   )}
                 </Button>
               )}
+
+              {isAuthenticated.value && getUser()?.isAdmin && (
+                <Button
+                  variant="ghost"
+                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === "/admin"
+                      ? "bg-blue-50 text-blue-700 shadow-sm"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
+                    }`}
+                  onClick={() => navigate("/admin")}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin
+                  {location.pathname === "/admin" && (
+                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"></div>
+                  )}
+                </Button>
+              )}
             </nav>
 
             <div className="flex items-center gap-3">
@@ -199,47 +216,52 @@ export function Header() {
                 </Button>
               )}
 
-              {isAuthenticated.value && (
+              {isAuthenticated.value && getUser()?.isAdmin && (
                 <Button
                   variant="ghost"
-                  className="w-full justify-start px-4 py-3 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-300 rounded-xl"
+                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === "/admin"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                    }`}
                   onClick={() => {
-                    navigate("/tables/create");
+                    navigate("/admin");
                     setIsMobileMenuOpen(false);
                   }}
                 >
-                  <Plus className="h-4 w-4 mr-3" />
-                  Add Table
+                  <Settings className="h-4 w-4 mr-3" />
+                  Admin Dashboard
                 </Button>
               )}
 
-              <Button
-                variant="ghost"
-                className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${isAuthenticated.value
-                    ? "text-red-600 hover:text-red-700 hover:bg-red-50"
-                    : "text-blue-700 hover:bg-blue-50"
-                  }`}
-                onClick={() => {
-                  if (isAuthenticated.value) {
-                    handleLogout();
-                  } else {
-                    navigate("/login");
-                  }
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                {isAuthenticated.value ? (
-                  <>
-                    <LogOut className="h-4 w-4 mr-3" />
-                    Log Out
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4 mr-3" />
-                    Log In
-                  </>
-                )}
-              </Button>
+              {isAuthenticated.value && (
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${isAuthenticated.value
+                      ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                      : "text-blue-700 hover:bg-blue-50"
+                    }`}
+                  onClick={() => {
+                    if (isAuthenticated.value) {
+                      handleLogout();
+                    } else {
+                      navigate("/login");
+                    }
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  {isAuthenticated.value ? (
+                    <>
+                      <LogOut className="h-4 w-4 mr-3" />
+                      Log Out
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4 mr-3" />
+                      Log In
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         )}

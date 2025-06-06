@@ -105,7 +105,7 @@ export default function TableUpdate() {
           }
         })
       }
-      const encryptedData = encryptObjectValues(postData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const encryptedData = encryptObjectValues(postData, import.meta.env.VITE_GOOGLE_API);
       const res = await updateTable(id, encryptedData)
       if (res.status == "error") {
         return toast(`Error creating table`, {
@@ -134,7 +134,7 @@ export default function TableUpdate() {
   useEffect(() => {
     api.get<TableInterface>(`/tables/${id}`).then((res) => {
       console.log(res.data,'res.data')
-      const decryptedData = decryptObjectValues(res.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const decryptedData = decryptObjectValues(res.data, import.meta.env.VITE_GOOGLE_API);
       console.log(decryptedData,'decryptedData')
       form.setValue("name", decryptedData.name ?? "")
       form.setValue("description", decryptedData.description ?? "")

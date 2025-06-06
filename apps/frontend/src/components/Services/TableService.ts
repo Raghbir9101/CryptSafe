@@ -21,7 +21,7 @@ export const getTables = async () => {
     try {
         const response = await api.get('/tables', { withCredentials: true });
         console.log(response.data,'response.data')
-        const decryptedData = decryptObjectValues(response.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+        const decryptedData = decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API);
         console.log(decryptedData,'decryptedData')
         Table.value = { ...Table.value, data: decryptedData, status: 'success' }
         return response.data

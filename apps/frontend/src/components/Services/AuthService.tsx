@@ -23,6 +23,10 @@ export const isInitialized = computed(() => {
     return Auth.value.isInitialized
 })
 
+export const getUser = () => {
+    return Auth.value.loggedInUser;
+}
+
 export const login = async (email: string, password: string) => {
     Auth.value = { ...Auth.value, status: 'loading' }
     try {
@@ -50,6 +54,15 @@ export const getUserAfterRefresh = async () => {
         Auth.value = { ...Auth.value, loggedInUser: response.data, isInitialized: true }
     } catch (error) {
         Auth.value = { ...Auth.value, loggedInUser: null, isInitialized: true }
+    }
+}
+
+export const getAdminsUsers = async()=>{
+    try {
+        const response = await api.get('/admin/getUsers', {withCredentials:true})
+        return response
+    } catch (error) {
+        return error
     }
 }
 

@@ -8,7 +8,9 @@ const networkAccessSchema = new mongoose_1.Schema({
     IP_ADDRESS: { type: String, required: true },
     enabled: { type: Boolean, default: true },
     comment: { type: String },
-    type: { type: String, enum: ['IPv4', 'IPv6'], required: true }
+    type: { type: String,
+        //  enum: ['IPv4', 'IPv6'],
+        required: true }
 }, { timestamps: true });
 const NetworkAccess = database_1.conn1.model("networkAccess", networkAccessSchema);
 const tableSchema = new mongoose_1.Schema({
@@ -22,7 +24,8 @@ const tableSchema = new mongoose_1.Schema({
                 type: {
                     type: String,
                     required: true,
-                    enum: validTypes,
+                    // enum: any,
+                    // enum: validTypes,
                 },
                 required: { type: Boolean, required: true },
                 hidden: { type: Boolean, required: true },
@@ -36,7 +39,10 @@ const tableSchema = new mongoose_1.Schema({
                 fieldPermission: {
                     type: [{
                             fieldName: { type: String, },
-                            permission: { type: String, enum: ["READ", "WRITE", "NONE"] },
+                            permission: { type: String,
+                                //  enum: ["READ", "WRITE", "NONE"] ,
+                                required: true
+                            },
                             filter: { type: Array, default: [] }
                         }],
                 },
@@ -49,7 +55,7 @@ const tableSchema = new mongoose_1.Schema({
                     type: [{
                             day: {
                                 type: String,
-                                enum: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
+                                // enum: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
                                 required: true
                             },
                             accessTime: {

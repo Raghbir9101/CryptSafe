@@ -4,6 +4,9 @@ import { HttpStatusCodes } from "../utils/errorCodes";
 import Table from "../models/table.model";
 import Data from "../models/data.model";
 import { TableInterface } from "@repo/types";
+import User from "../models/user.model";
+import { decryptObjectValues } from "../utils/encryption";
+import { sendEmail } from "../utils/emailService";
 dotenv.config();
 
 export default class TableController {
@@ -82,6 +85,39 @@ export default class TableController {
             return res.status(HttpStatusCodes.NOT_FOUND).json({ message: "Table not found" });
         }
 
+        let decryptedEmail = decryptObjectValues(sharedWith.email,process.env.GOOGLE_API)
+        console.log(decryptedEmail)
+        // Check if user exists, if not create one
+        let user = await User.findOne({ email: decryptedEmail });
+        console.log(user)
+        if (!user) {
+            // Generate a random password
+            const randomPassword = Math.random().toString(36).slice(-8);
+            user = await User.create({
+                email: decryptedEmail,
+                password: randomPassword,
+                isAdmin:false,
+                name: decryptedEmail.split('@')[0], // Use email prefix as name
+                passwordReset: false, // Flag to indicate password needs to be reset
+                admin:req?.user?._id
+            });
+            sendEmail(req?.user?.emailCreds, {
+                to: decryptedEmail,
+                subject: 'Welcome - Your Account Details',
+                text: `Welcome!\n\nYour account has been created with the following credentials:\nEmail: ${decryptedEmail}\nPassword: ${randomPassword}\n\nPlease login and change your password immediately for security reasons.\n\nBest regards!`,
+                html: `
+                    <h2>Welcome!</h2>
+                    <p>Your account has been created with the following credentials:</p>
+                    <p><strong>Email:</strong> ${decryptedEmail}</p>
+                    <p><strong>Password:</strong> ${randomPassword}</p>
+                    <p><strong>Important:</strong> Please login and change your password immediately for security reasons.</p>
+                    <br>
+                    <p>Best regards!</p>
+                `
+            });
+        }
+
+
         // Find existing shared user by _id
         const existingIndex = table.sharedWith.findIndex(item => item._id?.toString() === sharedWith._id?.toString());
 
@@ -96,6 +132,14 @@ export default class TableController {
         await table.save();
 
         res.status(HttpStatusCodes.OK).json({ table, message: "Table sharing updated!" });
+        // res.status(HttpStatusCodes.OK).json({ 
+        //     table, 
+        //     message: "Table sharing updated!",
+        //     newUserCreated: !user.passwordReset ? false : {
+        //         email: user.email,
+        //         password: user.password
+        //     }
+        // });
     })
     static deleteTable = asyncHandler(async (req, res): Promise<any> => {
         if (!req.params.id) {

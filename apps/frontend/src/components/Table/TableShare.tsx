@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +7,7 @@ import SharedUsersList from "./shared-users-list"
 import { useParams } from "react-router-dom"
 import { api } from "@/Utils/utils"
 import { decryptObjectValues, encryptObjectValues } from "../Services/encrption"
+import { toast } from "sonner"
 
 // Mock function to update table - replace with your actual API call
 const updateTable = async (tableId: string, updatedTable: TableInterface): Promise<void> => {
@@ -26,7 +25,7 @@ export default function SharePage() {
     const getTable = async () => {
       try {
         const res = await api.get(`/tables/${tableId}`)
-        const decryptedData = decryptObjectValues(res.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+        const decryptedData = decryptObjectValues(res.data, import.meta.env.VITE_GOOGLE_API);
         setTable(decryptedData)
       } catch (error) {
         console.error("Failed to fetch table:", error)
@@ -40,10 +39,18 @@ export default function SharePage() {
 
   const handleAddSharedUser = async (newSharedUser: SharedWithInterface) => {
     if (!table) return
-
+    
+    // Check if user already exists
+    const userExists = table.sharedWith?.some(user => user.email === newSharedUser.email)
+    if (userExists) {
+      toast.error("User already exists", {
+        description: "This user has already been shared with this table.",
+      })
+      return
+    }
+    
     try {
-      const encryptedData = encryptObjectValues(newSharedUser, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
-      console.log(encryptedData,'encryptedData')
+      const encryptedData = encryptObjectValues(newSharedUser, import.meta.env.VITE_GOOGLE_API);
       const res = await api.patch(`/tables/share/${tableId}`, {
         sharedWith: encryptedData
       });
@@ -52,11 +59,16 @@ export default function SharePage() {
         return
       }
 
-      setTable(res.data.table)
-
+      setTable(decryptObjectValues(res.data.table,import.meta.env.VITE_GOOGLE_API))
+      toast.success("User added successfully", {
+        description: "The user has been shared with this table.",
+      })
       setIsModalOpen(false)
     } catch (error) {
       console.error("Failed to update table:", error)
+      toast.error("Failed to add user", {
+        description: "There was an error sharing the table with this user.",
+      })
     }
   }
 
@@ -64,7 +76,7 @@ export default function SharePage() {
     if (!table) return
 
     try {
-      const encryptedData = encryptObjectValues(updatedUser, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const encryptedData = encryptObjectValues(updatedUser, import.meta.env.VITE_GOOGLE_API);
       const res = await api.patch(`/tables/share/${tableId}`, {
         sharedWith: encryptedData
       });

@@ -9,7 +9,7 @@ import TableUpdate from "../Table/TableUpdate";
 import TableCreate from "../Table/TableCreate";
 import UsersUpdate from "../Users/UsersUpdate";
 import TableShare from "../Table/TableShare";
-import { isAuthenticated, isInitialized } from "../Services/AuthService";
+import { isAuthenticated, isInitialized, getUser } from "../Services/AuthService";
 import Home from "../Home/Home";
 import About from "../About/About";
 import Contact from "../Contact/Contact";
@@ -23,6 +23,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
     
     if (isAuthenticated.value) {
+        return children;
+    }
+    
+    return <Navigate to='/login' state={{ from: location }} replace />;
+}
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const location = useLocation();
+    const user = getUser();
+    
+    if (!isInitialized.value) {
+        return null;
+    }
+    
+    if (isAuthenticated.value && user?.isAdmin) {
         return children;
     }
     
