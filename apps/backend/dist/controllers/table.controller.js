@@ -14,12 +14,14 @@ const emailService_1 = require("../utils/emailService");
 dotenv_1.default.config();
 class TableController {
     static getAllTableData = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
+        console.log((0, encryption_1.encryptObjectValues)(req?.user?.email, process.env.GOOGLE_API), 'kaddu');
         const tables = await table_model_1.default.find({
             $or: [
                 { createdBy: req?.user?._id },
-                { "sharedWith.email": req?.user?.email }
+                { "sharedWith.email": (0, encryption_1.encryptObjectValues)(req?.user?.email, process.env.GOOGLE_API) }
             ]
         }).populate('updatedBy', 'name');
+        console.log(tables, 'tables');
         res.status(200).json(tables);
     });
     static getTableDataWithID = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
