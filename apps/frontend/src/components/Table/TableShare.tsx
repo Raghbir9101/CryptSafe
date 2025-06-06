@@ -8,6 +8,7 @@ import ShareModal from "./share-modal"
 import SharedUsersList from "./shared-users-list"
 import { useParams } from "react-router-dom"
 import { api } from "@/Utils/utils"
+import { decryptObjectValues, encryptObjectValues } from "../Services/encrption"
 
 // Mock function to update table - replace with your actual API call
 const updateTable = async (tableId: string, updatedTable: TableInterface): Promise<void> => {
@@ -25,7 +26,8 @@ export default function SharePage() {
     const getTable = async () => {
       try {
         const res = await api.get(`/tables/${tableId}`)
-        setTable(res.data)
+        const decryptedData = decryptObjectValues(res.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+        setTable(decryptedData)
       } catch (error) {
         console.error("Failed to fetch table:", error)
       } finally {
@@ -40,8 +42,10 @@ export default function SharePage() {
     if (!table) return
 
     try {
+      const encryptedData = encryptObjectValues(newSharedUser, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      console.log(encryptedData,'encryptedData')
       const res = await api.patch(`/tables/share/${tableId}`, {
-        sharedWith: newSharedUser
+        sharedWith: encryptedData
       });
 
       if (res.data.error) {
@@ -60,8 +64,9 @@ export default function SharePage() {
     if (!table) return
 
     try {
+      const encryptedData = encryptObjectValues(updatedUser, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
       const res = await api.patch(`/tables/share/${tableId}`, {
-        sharedWith: updatedUser
+        sharedWith: encryptedData
       });
 
       if (res.data.error) {

@@ -34,6 +34,7 @@ export interface NetworkAccessInterface {
 }
 
 export interface SharedWithInterface {
+    _id?: string;
     email: string;
     fieldPermission: FieldPermissionInterface[];
     tablePermissions: {
