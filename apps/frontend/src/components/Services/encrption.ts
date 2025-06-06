@@ -21,8 +21,9 @@ export function encryptObjectValues(obj: any, secretKey: string): any {
       return encryptedObj;
     } else {
       // Encrypt only primitive values (string, number, boolean)
-      let iv = CryptoJS.enc.Utf8.parse(process.env.GOOGLE_API)
-      return CryptoJS.AES.encrypt(String(obj), secretKey, {iv:iv}).toString();
+      const key = CryptoJS.enc.Utf8.parse(import.meta.env.VITE.GOOGLE_API);
+      let iv = CryptoJS.enc.Utf8.parse(import.meta.env.VITE.GOOGLE_API)
+      return CryptoJS.AES.encrypt(String(obj), key, {iv:iv}).toString();
       // return CryptoJS.AES.encrypt(String(obj), secretKey).toString();
     }
   }
