@@ -23,9 +23,16 @@ const userSchema = new mongoose_1.Schema({
         required: true,
         trim: true
     },
+    passwordReset: { type: Boolean, default: false },
+    isAdmin: { type: Boolean },
+    admin: { type: mongoose_1.Schema.Types.ObjectId, ref: "users", default: null },
     isGoogleUser: {
         type: Boolean,
         default: false
+    },
+    emailCreds: {
+        userName: { type: String },
+        userPass: { type: String }
     }
 }, { timestamps: true });
 // Hash password before saving

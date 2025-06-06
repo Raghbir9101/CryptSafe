@@ -1,41 +1,55 @@
-import CryptoJS from 'crypto-js';
-import dotenv from 'dotenv';
+import CryptoJS from "crypto-js";
 
-dotenv.config();
+// Encrypts a JS object using AES and a secret key
+// export function encryptData(data: any, secretKey: string): string {
+//   const json = JSON.stringify(data);
+//   return CryptoJS.AES.encrypt(json, secretKey).toString();
+// }
+const skipKeys = ["unique", "required", "hidden", "options","tablePermissions","enabled","fieldPermission","isBlocked","workingTimeAccess","restrictNetwork","restrictWorkingTime","_id","createdAt","updatedAt"];
+export function encryptObjectValues(obj: any, secretKey: string): any {
+    if (Array.isArray(obj)) {
+      return obj.map(item => encryptObjectValues(item, secretKey));
+    } else if (obj !== null && typeof obj === "object") {
+      const encryptedObj: any = {};
+      for (const key in obj) {
+        if(skipKeys.includes(key)){
+          encryptedObj[key] = obj[key];
+        }else{
+          encryptedObj[key] = encryptObjectValues(obj[key], secretKey);
+        }
+      }
+      return encryptedObj;
+    } else {
+      // Encrypt only primitive values (string, number, boolean)
+      return CryptoJS.AES.encrypt(String(obj), secretKey).toString();
+    }
+  }
+  
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-secret-key-minimum-32-characters';
 
-export const encrypt = (data: any): string => {
-    if (data === null || data === undefined) {
-        return '';
+export function decryptObjectValues(obj: any, secretKey: string): any {
+  if (Array.isArray(obj)) {
+    return obj.map(item => decryptObjectValues(item, secretKey));
+  } else if (obj !== null && typeof obj === "object") {
+    const decryptedObj: any = {};
+    for (const key in obj) {
+      if (skipKeys.includes(key)) {
+        decryptedObj[key] = obj[key];
+      } else {
+        decryptedObj[key] = decryptObjectValues(obj[key], secretKey);
+      }
     }
-    if (Array.isArray(data)) {
-        return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
-    }
-    if (typeof data === 'object') {
-        return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
-    }
-    return CryptoJS.AES.encrypt(String(data), ENCRYPTION_KEY).toString();
-};
-
-export const decrypt = (encryptedData: string): any => {
-    if (!encryptedData) {
-        return null;
-    }
+    return decryptedObj;
+  } else if (typeof obj === "string") {
     try {
-        const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
-        const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
-        if (!decryptedString) {
-            return null;
-        }
-        try {
-            const parsed = JSON.parse(decryptedString);
-            return parsed;
-        } catch {
-            return decryptedString;
-        }
-    } catch (error) {
-        console.error('Decryption error:', error);
-        return null;
+      const bytes = CryptoJS.AES.decrypt(obj, secretKey);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      // If decryption fails, decrypted will be empty string
+      return decrypted ? decrypted : obj;
+    } catch {
+      return obj;
     }
-}; 
+  } else {
+    return obj;
+  }
+}

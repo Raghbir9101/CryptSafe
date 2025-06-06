@@ -159,7 +159,7 @@ export default function TableCreate() {
           }
         })
       }
-      const encrypted = encryptObjectValues(postData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const encrypted = encryptObjectValues(postData, import.meta.env.VITE_GOOGLE_API);
       console.log(encrypted,'entypted.')
       const res = await createTable(encrypted);
 

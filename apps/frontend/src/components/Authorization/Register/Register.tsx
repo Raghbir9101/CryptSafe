@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { Shield, Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { register } from '@/components/Services/AuthService';
+import { encryptObjectValues } from '@/components/Services/encrption';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -64,11 +65,12 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      const response = await register(formData.email, formData.password, formData.name);
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
+      const encrypted=encryptObjectValues({email:formData.email},import.meta.env.VITE_GOOGLE_API)
+      console.log(encrypted,'kadddu')
+      // const response = await register(encrypted.email, formData.password, formData.name);
+      // if (response.error) {
+      //   throw new Error(response.error);
+      // }
 
       toast.success("Account Created Successfully", {
         description: "Welcome to CryptSafe! Please sign in with your new account.",

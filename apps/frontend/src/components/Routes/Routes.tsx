@@ -14,7 +14,6 @@ import Home from "../Home/Home";
 import About from "../About/About";
 import Contact from "../Contact/Contact";
 import ResetPassword from "../ResetPassword.tsx/ResetPassword";
-import AdminDashboard from "../../pages/AdminDashboard";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
@@ -73,8 +72,6 @@ export default function AllRoutes() {
                 <Navigate to={location.state?.from?.pathname || "/tables"} replace /> : 
                 <Register />
             } />
-
-            <Route path='/admin' element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
             <Route path='/tables' element={<ProtectedRoute><Tables /></ProtectedRoute>} />
             <Route path='/tables/create' element={<ProtectedRoute><TableCreate /></ProtectedRoute>} />

@@ -83,10 +83,10 @@ export default function TableContent() {
         api.get(`/tables/${id}`),
         api.get(`/tables/rows/${id}`)
       ]);
-      const decryptedTable = decryptObjectValues(tableRes.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const decryptedTable = decryptObjectValues(tableRes.data, import.meta.env.VITE_GOOGLE_API);
       const decryptedRows = rowsRes.data.map((row: any) => ({
         ...row,
-        data: decryptObjectValues(row.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls")
+        data: decryptObjectValues(row.data, import.meta.env.VITE_GOOGLE_API)
       }));
       console.log(decryptedTable,decryptedRows,'tableRes.data')
       setTableFields(decryptedTable.fields);
@@ -164,7 +164,7 @@ export default function TableContent() {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
       });
-      const encryptedData = encryptObjectValues(processedData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const encryptedData = encryptObjectValues(processedData, import.meta.env.VITE_GOOGLE_API);
       await api.patch(`/tables/update/${id}/${rowId}`, encryptedData);
       setEditingRow(null);
       toast.success('Row updated successfully');
@@ -228,9 +228,9 @@ export default function TableContent() {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
       });
-      const encryptedData = encryptObjectValues(processedData, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const encryptedData = encryptObjectValues(processedData, import.meta.env.VITE_GOOGLE_API);
       const response = await api.post(`/tables/insert/${id}`, encryptedData);
-      const decryptedResponse = decryptObjectValues(response.data, "thisiskadduklfljdsklf jdsklfjkdsjkfj fsfjlksj flllllllllllls");
+      const decryptedResponse = decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API);
       setRows([...rows, decryptedResponse.row]);
 
       // Reset new row form
