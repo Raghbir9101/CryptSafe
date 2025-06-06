@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Shield, Menu, X, Plus, LogOut, LogIn, Database, Home, Info, Mail, Settings } from "lucide-react";
-import { isAuthenticated, logout, getUser } from "../Services/AuthService";
+import { isAuthenticated, logout, getUser, getUserAfterRefresh, Auth } from "../Services/AuthService";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
+  useEffect(() => {
+    getUserAfterRefresh();
+  }, []);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -18,7 +20,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     try {
       const result = await logout();
       if (result.success) {
@@ -45,8 +47,8 @@ export function Header() {
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
-          ? "bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-lg shadow-gray-900/5"
-          : "bg-white border-b border-gray-100"
+        ? "bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-lg shadow-gray-900/5"
+        : "bg-white border-b border-gray-100"
         }`}
     >
       {/* Gradient accent line */}
@@ -75,8 +77,8 @@ export function Header() {
                   key={item.path}
                   variant="ghost"
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === item.path
-                      ? "bg-blue-50 text-blue-700 shadow-sm"
-                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
+                    ? "bg-blue-50 text-blue-700 shadow-sm"
+                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
                     }`}
                   onClick={() => navigate(item.path)}
                 >
@@ -92,8 +94,8 @@ export function Header() {
                 <Button
                   variant="ghost"
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === "/tables"
-                      ? "bg-blue-50 text-blue-700 shadow-sm"
-                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
+                    ? "bg-blue-50 text-blue-700 shadow-sm"
+                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
                     }`}
                   onClick={() => navigate("/tables")}
                 >
@@ -109,8 +111,8 @@ export function Header() {
                 <Button
                   variant="ghost"
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === "/admin"
-                      ? "bg-blue-50 text-blue-700 shadow-sm"
-                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
+                    ? "bg-blue-50 text-blue-700 shadow-sm"
+                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
                     }`}
                   onClick={() => navigate("/admin")}
                 >
@@ -124,7 +126,7 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-3">
-              {isAuthenticated.value && (
+              {Auth?.value?.loggedInUser?.isAdmin && (
                 <Button
                   variant="outline"
                   className="cursor-pointer relative px-4 py-2 text-sm font-medium text-blue-700 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 rounded-full group overflow-hidden"
@@ -139,8 +141,8 @@ export function Header() {
               <Button
                 variant={isAuthenticated.value ? "ghost" : "default"}
                 className={`cursor-pointer relative px-6 py-2 text-sm font-medium transition-all duration-300 rounded-full group overflow-hidden ${isAuthenticated.value
-                    ? "text-red-600 hover:text-red-700 hover:bg-red-50"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                  ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
                   }`}
                 onClick={isAuthenticated.value ? handleLogout : () => navigate("/login")}
               >
@@ -186,8 +188,8 @@ export function Header() {
                   key={item.path}
                   variant="ghost"
                   className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === item.path
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
                     }`}
                   onClick={() => {
                     navigate(item.path);
@@ -203,8 +205,8 @@ export function Header() {
                 <Button
                   variant="ghost"
                   className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === "/tables"
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
                     }`}
                   onClick={() => {
                     navigate("/tables");
@@ -220,8 +222,8 @@ export function Header() {
                 <Button
                   variant="ghost"
                   className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === "/admin"
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
                     }`}
                   onClick={() => {
                     navigate("/admin");
@@ -237,8 +239,8 @@ export function Header() {
                 <Button
                   variant="ghost"
                   className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${isAuthenticated.value
-                      ? "text-red-600 hover:text-red-700 hover:bg-red-50"
-                      : "text-blue-700 hover:bg-blue-50"
+                    ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                    : "text-blue-700 hover:bg-blue-50"
                     }`}
                   onClick={() => {
                     if (isAuthenticated.value) {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getTables, SelectedTable } from '../Services/TableService';
 import { Table } from "../Services/TableService"
 import { ExternalLink, Pencil, ShareIcon, Trash2, Plus, MoreVertical } from 'lucide-react';
@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Auth } from '../Services/AuthService';
+import { Auth, getUserAfterRefresh } from '../Services/AuthService';
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/tooltip"
 
 export default function Tables() {
+  const [isAdmin, setIsAdmin] = useState(false)
   const nav = useNavigate();
   const handleDelete = async (id: any) => {
     try {
@@ -52,7 +53,9 @@ export default function Tables() {
   useEffect(() => {
     getTables()
   }, [])
-
+  useEffect(() => {
+    getUserAfterRefresh()
+  }, []);
   return (
     <div className="container mx-auto px-6 py-20">
       <div className="flex justify-between items-center">
@@ -175,14 +178,16 @@ export default function Tables() {
                 <TableCell colSpan={7} className="h-24 text-center">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <p className="text-muted-foreground">No tables found</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => nav('/tables/create')}
-                      className="mt-2 transition-colors duration-200"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create your first table
-                    </Button>
+                    {
+                      Auth?.value?.loggedInUser?.isAdmin && <Button
+                        variant="outline"
+                        onClick={() => nav('/tables/create')}
+                        className="mt-2 transition-colors duration-200"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create your first table
+                      </Button>
+                    }
                   </div>
                 </TableCell>
               </TableRow>
@@ -191,21 +196,23 @@ export default function Tables() {
         </TableComponent>
       </div>
 
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={() => nav('/tables/create')}
-              className="fixed cursor-pointer bottom-6 right-6 bg-primary hover:bg-primary/90 text-white transition-colors duration-200 shadow-lg rounded-full h-12 w-12 flex items-center justify-center bg-[#4161ed] hover:bg-[#1f3fcc] "
-            >
-              <span className="text-3xl">+</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Create New Table</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {
+        Auth?.value?.loggedInUser?.isAdmin && <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => nav('/tables/create')}
+                className="fixed cursor-pointer bottom-6 right-6 bg-primary hover:bg-primary/90 text-white transition-colors duration-200 shadow-lg rounded-full h-12 w-12 flex items-center justify-center bg-[#4161ed] hover:bg-[#1f3fcc] "
+              >
+                <span className="text-3xl">+</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Create New Table</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      }
     </div>
   );
 }

@@ -5,19 +5,21 @@ import Table from "../models/table.model";
 import Data from "../models/data.model";
 import { TableInterface } from "@repo/types";
 import User from "../models/user.model";
-import { decryptObjectValues } from "../utils/encryption";
+import { decryptObjectValues, encryptObjectValues } from "../utils/encryption";
 import { sendEmail } from "../utils/emailService";
 dotenv.config();
 
 export default class TableController {
 
     static getAllTableData = asyncHandler(async (req, res): Promise<void> => {
+        console.log(encryptObjectValues(req?.user?.email, process.env.GOOGLE_API),'kaddu')
         const tables = await Table.find({
             $or: [
                 { createdBy: req?.user?._id },
-                { "sharedWith.email": req?.user?.email }
+                { "sharedWith.email": encryptObjectValues(req?.user?.email, process.env.GOOGLE_API) }
             ]
         }).populate('updatedBy', 'name')
+        console.log(tables,'tables')
         res.status(200).json(tables)
     })
 
