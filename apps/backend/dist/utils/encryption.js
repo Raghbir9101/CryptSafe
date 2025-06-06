@@ -30,7 +30,9 @@ function encryptObjectValues(obj, secretKey) {
     }
     else {
         // Encrypt only primitive values (string, number, boolean)
-        return crypto_js_1.default.AES.encrypt(String(obj), secretKey).toString();
+        const key = crypto_js_1.default.enc.Utf8.parse(process.env.GOOGLE_API);
+        let iv = crypto_js_1.default.enc.Utf8.parse(process.env.GOOGLE_API);
+        return crypto_js_1.default.AES.encrypt(String(obj), key, { iv: iv }).toString();
     }
 }
 function decryptObjectValues(obj, secretKey) {
@@ -51,7 +53,14 @@ function decryptObjectValues(obj, secretKey) {
     }
     else if (typeof obj === "string") {
         try {
-            const bytes = crypto_js_1.default.AES.decrypt(obj, secretKey);
+            const key = crypto_js_1.default.enc.Utf8.parse(process.env.GOOGLE_API);
+            let iv = crypto_js_1.default.enc.Utf8.parse(process.env.GOOGLE_API);
+            const bytes = crypto_js_1.default.AES.decrypt(obj, key, {
+                iv: iv,
+                mode: crypto_js_1.default.mode.CBC,
+                padding: crypto_js_1.default.pad.Pkcs7
+            });
+            // const bytes = CryptoJS.AES.decrypt(obj, secretKey);
             const decrypted = bytes.toString(crypto_js_1.default.enc.Utf8);
             // If decryption fails, decrypted will be empty string
             return decrypted ? decrypted : obj;

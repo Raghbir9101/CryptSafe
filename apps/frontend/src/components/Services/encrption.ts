@@ -21,8 +21,9 @@ export function encryptObjectValues(obj: any, secretKey: string): any {
       return encryptedObj;
     } else {
       // Encrypt only primitive values (string, number, boolean)
-      const key = CryptoJS.enc.Utf8.parse(import.meta.env.VITE.GOOGLE_API);
-      let iv = CryptoJS.enc.Utf8.parse(import.meta.env.VITE.GOOGLE_API)
+      console.log(import.meta.env.VITE_GOOGLE_API)
+      const key = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API);
+      let iv = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API)
       return CryptoJS.AES.encrypt(String(obj), key, {iv:iv}).toString();
       // return CryptoJS.AES.encrypt(String(obj), secretKey).toString();
     }
@@ -45,7 +46,13 @@ export function decryptObjectValues(obj: any, secretKey: string): any {
     return decryptedObj;
   } else if (typeof obj === "string") {
     try {
-      const bytes = CryptoJS.AES.decrypt(obj, secretKey);
+      const key = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API);
+      let iv = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API)
+      const bytes = CryptoJS.AES.decrypt(obj, key,{
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+      });
       const decrypted = bytes.toString(CryptoJS.enc.Utf8);
       // If decryption fails, decrypted will be empty string
       return decrypted ? decrypted : obj;

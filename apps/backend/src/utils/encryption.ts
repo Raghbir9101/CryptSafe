@@ -44,7 +44,14 @@ export function decryptObjectValues(obj: any, secretKey: string): any {
     return decryptedObj;
   } else if (typeof obj === "string") {
     try {
-      const bytes = CryptoJS.AES.decrypt(obj, secretKey);
+      const key = CryptoJS.enc.Utf8.parse(process.env.GOOGLE_API);
+      let iv = CryptoJS.enc.Utf8.parse(process.env.GOOGLE_API)
+      const bytes = CryptoJS.AES.decrypt(obj, key,{
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+      });
+      // const bytes = CryptoJS.AES.decrypt(obj, secretKey);
       const decrypted = bytes.toString(CryptoJS.enc.Utf8);
       // If decryption fails, decrypted will be empty string
       return decrypted ? decrypted : obj;
