@@ -3,6 +3,7 @@ import userRoutes from "./user.routes";
 import authRoutes from "./auth.routes";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import tableRouter from "./table.routes";
+import adminRouter from "./admin.routes"
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use(authenticateToken);
 // Routes that require authentication
 router.use("/users", userRoutes);
 router.use("/tables", tableRouter);
+router.use("/admin",adminRouter)
 
 export default router;

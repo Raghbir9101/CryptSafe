@@ -9,6 +9,13 @@ export interface IUser extends Document {
   name: string;
   isGoogleUser: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  isAdmin:boolean;
+  admin:string;
+  passwordReset:boolean;
+  emailCreds:{
+    userName:string;
+    userPass:string;
+  };
 }
 
 const userSchema: Schema = new Schema({
@@ -27,9 +34,16 @@ const userSchema: Schema = new Schema({
     required: true,
     trim: true
   },
+  passwordReset:{type:Boolean, default:false},
+  isAdmin:{type:Boolean},
+  admin:{type:Schema.Types.ObjectId, ref:"users", default: null},
   isGoogleUser: {
     type: Boolean,
     default: false
+  },
+  emailCreds:{
+    userName:{type:String},
+    userPass:{type:String}
   }
 }, { timestamps: true });
 

@@ -9,11 +9,12 @@ import TableUpdate from "../Table/TableUpdate";
 import TableCreate from "../Table/TableCreate";
 import UsersUpdate from "../Users/UsersUpdate";
 import TableShare from "../Table/TableShare";
-import { isAuthenticated, isInitialized } from "../Services/AuthService";
+import { isAuthenticated, isInitialized, getUser } from "../Services/AuthService";
 import Home from "../Home/Home";
 import About from "../About/About";
 import Contact from "../Contact/Contact";
 import ResetPassword from "../ResetPassword.tsx/ResetPassword";
+import AdminDashboard from "../../pages/AdminDashboard";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
@@ -23,6 +24,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
     
     if (isAuthenticated.value) {
+        return children;
+    }
+    
+    return <Navigate to='/login' state={{ from: location }} replace />;
+}
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const location = useLocation();
+    const user = getUser();
+    
+    if (!isInitialized.value) {
+        return null;
+    }
+    
+    if (isAuthenticated.value && user?.isAdmin) {
         return children;
     }
     
@@ -57,6 +73,8 @@ export default function AllRoutes() {
                 <Navigate to={location.state?.from?.pathname || "/tables"} replace /> : 
                 <Register />
             } />
+
+            <Route path='/admin' element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
             <Route path='/tables' element={<ProtectedRoute><Tables /></ProtectedRoute>} />
             <Route path='/tables/create' element={<ProtectedRoute><TableCreate /></ProtectedRoute>} />
