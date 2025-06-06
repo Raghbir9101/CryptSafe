@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { api } from '@/Utils/utils';
 import { toast } from 'sonner';
 import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import InitialPasswordReset from '../InitialPasswordReset';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,8 +18,6 @@ export default function Login() {
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
-  const [showPasswordResetModal, setShowPasswordResetModal] = React.useState(false);
-  const [userId, setUserId] = React.useState('');
 
   const validateInputs = () => {
     const email: any = document.getElementById('email');
@@ -57,24 +54,13 @@ export default function Login() {
     setIsLoading(true);
     try {
       const data = new FormData(event.currentTarget);
-      // const encrypted=encryptObjectValues({email:data.get('email')},import.meta.env.VITE_GOOGLE_API)
-      // const response = await login(encrypted.email as string, data.get('password') as string);
       const response = await login(data.get('email') as string, data.get('password') as string);
       console.log('Login Response:', response);
       toast.success("Login Successful", {
         description: "You have successfully logged in.",
       });
       
-      console.log('User from response:', response.user);
-      console.log('PasswordReset status:', response.user?.passwordReset);
-      
-      if (response.user && !response.user.passwordReset) {
-        console.log('Setting userId:', response.user._id);
-        setUserId(response.user._id);
-        console.log('Setting showPasswordResetModal to true');
-        setShowPasswordResetModal(true);
-        console.log('Current modal state:', showPasswordResetModal);
-      } else if (response.success) {
+      if (response.success && response.user?.passwordReset) {
         navigate('/dashboard');
       }
     } catch (error) {
@@ -84,11 +70,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-
-  // Add effect to monitor modal state
-  React.useEffect(() => {
-    console.log('Modal state changed:', showPasswordResetModal);
-  }, [showPasswordResetModal]);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -274,15 +255,6 @@ export default function Login() {
           </CardContent>
         </Card>
       </div>
-
-      <InitialPasswordReset 
-        isOpen={showPasswordResetModal}
-        onClose={() => {
-          setShowPasswordResetModal(false);
-          navigate('/dashboard');
-        }}
-        userId={userId}
-      />
     </div>
   );
 }
