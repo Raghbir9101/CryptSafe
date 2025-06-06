@@ -302,4 +302,49 @@ export default class AuthController {
 
         res.status(HttpStatusCodes.OK).json({ message: 'Password reset successful' });
     });
+
+    // Initial password reset for new users
+    static initialPasswordReset = asyncHandler(async (req: Request, res: Response) => {
+        const { userId, newPassword, confirmPassword } = req.body;
+
+        if (!userId || !newPassword || !confirmPassword) {
+            res.status(HttpStatusCodes.BAD_REQUEST).json({ 
+                message: 'User ID, new password and confirm password are required' 
+            });
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            res.status(HttpStatusCodes.BAD_REQUEST).json({ 
+                message: 'Passwords do not match' 
+            });
+            return;
+        }
+
+        // Find user and update password
+        const user = await User.findById(userId);
+        if (!user) {
+            res.status(HttpStatusCodes.NOT_FOUND).json({ message: 'User not found' });
+            return;
+        }
+
+        // Update password and set passwordReset to true
+        user.password = newPassword;
+        user.passwordReset = true;
+        await user.save();
+
+        // Update backup database
+        await UserBackup.findByIdAndUpdate(userId, {
+            password: newPassword,
+            passwordReset: true
+        });
+
+        res.status(HttpStatusCodes.OK).json({ 
+            message: 'Password reset successful',
+            user: {
+                ...user.toObject(),
+                password: undefined
+            }
+        });
+    });
 }

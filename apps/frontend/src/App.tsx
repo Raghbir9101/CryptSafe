@@ -1,11 +1,15 @@
 import { useEffect } from "react";
 import "./App.css";
 import AllRoutes from "./components/Routes/Routes";
-import { getUserAfterRefresh } from "./components/Services/AuthService";
+import { Auth, getUserAfterRefresh } from "./components/Services/AuthService";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "./components/Header/Header";
+import InitialPasswordReset from "./components/Authorization/InitialPasswordReset";
+import { useNavigate } from "react-router-dom";
 
 function App() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     getUserAfterRefresh();
   }, []);
@@ -17,6 +21,15 @@ function App() {
       <main className="">
         <AllRoutes />
       </main>
+
+      <InitialPasswordReset 
+        isOpen={Auth.value.showPasswordResetModal}
+        onClose={() => {
+          Auth.value.showPasswordResetModal = false;
+          navigate('/dashboard');
+        }}
+        userId={Auth.value.passwordResetUserId || ''}
+      />
     </div>
   );
 }

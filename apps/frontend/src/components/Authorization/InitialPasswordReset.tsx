@@ -1,16 +1,11 @@
 import * as React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from "@/components/ui/button";
-import { Lock, Eye, EyeOff } from 'lucide-react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
+import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/Utils/utils';
+import { initialPasswordReset } from '../Services/AuthService';
 
 interface InitialPasswordResetProps {
     isOpen: boolean;
@@ -35,8 +30,8 @@ export default function InitialPasswordReset({ isOpen, onClose, userId }: Initia
     }, [isOpen]);
 
     const validatePasswords = () => {
-        if (!newPassword || newPassword.length < 8) {
-            setPasswordError('Password must be at least 8 characters long');
+        if (newPassword.length < 6) {
+            setPasswordError('Password must be at least 6 characters long');
             return false;
         }
         if (newPassword !== confirmPassword) {
@@ -47,27 +42,17 @@ export default function InitialPasswordReset({ isOpen, onClose, userId }: Initia
         return true;
     };
 
-    const handleResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        if (!validatePasswords()) {
-            return;
-        }
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validatePasswords()) return;
 
         setIsLoading(true);
         try {
-            await api.post('/auth/initial-reset-password', {
-                userId,
-                newPassword,
-                confirmPassword
-            });
-            toast.success("Password Reset Successful", {
-                description: "Your password has been updated successfully.",
-            });
+            await initialPasswordReset(userId, newPassword, confirmPassword);
+            toast.success('Password reset successful');
             onClose();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to reset password");
-            console.error('Password reset failed:', error);
+            toast.error(error.response?.data?.message || 'Failed to reset password');
         } finally {
             setIsLoading(false);
         }
@@ -79,21 +64,16 @@ export default function InitialPasswordReset({ isOpen, onClose, userId }: Initia
                 <DialogHeader>
                     <DialogTitle>Set Your Password</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleResetPassword} className="space-y-6">
-                    <div className="space-y-3">
-                        <Label htmlFor="newPassword" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-blue-600" />
-                            New Password
-                        </Label>
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
                         <div className="relative">
                             <Input
                                 id="newPassword"
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Enter new password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className={`h-12 text-lg pr-12 ${passwordError ? "border-red-500 focus:border-red-500 bg-red-50" : "border-gray-300 focus:border-blue-500 bg-white"} transition-all duration-300 focus:shadow-lg`}
-                                disabled={isLoading}
+                                className="pr-10"
                             />
                             <Button
                                 type="button"
@@ -111,20 +91,15 @@ export default function InitialPasswordReset({ isOpen, onClose, userId }: Initia
                         </div>
                     </div>
 
-                    <div className="space-y-3">
-                        <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-blue-600" />
-                            Confirm Password
-                        </Label>
+                    <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
                         <div className="relative">
                             <Input
                                 id="confirmPassword"
                                 type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm new password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className={`h-12 text-lg pr-12 ${passwordError ? "border-red-500 focus:border-red-500 bg-red-50" : "border-gray-300 focus:border-blue-500 bg-white"} transition-all duration-300 focus:shadow-lg`}
-                                disabled={isLoading}
+                                className="pr-10"
                             />
                             <Button
                                 type="button"
@@ -140,24 +115,18 @@ export default function InitialPasswordReset({ isOpen, onClose, userId }: Initia
                                 )}
                             </Button>
                         </div>
-                        {passwordError && (
-                            <p className="text-sm text-red-600 animate-fade-in">{passwordError}</p>
-                        )}
                     </div>
+
+                    {passwordError && (
+                        <p className="text-sm text-red-600">{passwordError}</p>
+                    )}
 
                     <Button
                         type="submit"
-                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
+                        className="w-full"
                         disabled={isLoading}
                     >
-                        {isLoading ? (
-                            <div className="flex items-center gap-3">
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                Resetting Password...
-                            </div>
-                        ) : (
-                            'Reset Password'
-                        )}
+                        {isLoading ? 'Resetting Password...' : 'Reset Password'}
                     </Button>
                 </form>
             </DialogContent>
