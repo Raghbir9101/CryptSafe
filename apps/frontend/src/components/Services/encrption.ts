@@ -21,9 +21,9 @@ export function encryptObjectValues(obj: any, secretKey: string): any {
       return encryptedObj;
     } else {
       // Encrypt only primitive values (string, number, boolean)
-      console.log(import.meta.env.VITE_GOOGLE_API)
-      const key = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API);
-      let iv = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API)
+      // console.log("xhvajhabdadciajwdfihasdf-alskdjbfasdfb-adsfaskdjflvc")
+      const key = CryptoJS.enc.Utf8.parse("xhvajhabdadciajwdfihasdf-alskdjbfasdfb-adsfaskdjflvc");
+      let iv = CryptoJS.enc.Utf8.parse("xhvajhabdadciajwdfihasdf-alskdjbfasdfb-adsfaskdjflvc")
       return CryptoJS.AES.encrypt(String(obj), key, {iv:iv}).toString();
       // return CryptoJS.AES.encrypt(String(obj), secretKey).toString();
     }
@@ -46,8 +46,8 @@ export function decryptObjectValues(obj: any, secretKey: string): any {
     return decryptedObj;
   } else if (typeof obj === "string") {
     try {
-      const key = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API);
-      let iv = CryptoJS.enc.Utf8.parse(import.meta.env.VITE_GOOGLE_API)
+      const key = CryptoJS.enc.Utf8.parse("xhvajhabdadciajwdfihasdf-alskdjbfasdfb-adsfaskdjflvc");
+      let iv = CryptoJS.enc.Utf8.parse("xhvajhabdadciajwdfihasdf-alskdjbfasdfb-adsfaskdjflvc")
       const bytes = CryptoJS.AES.decrypt(obj, key,{
         iv: iv,
         mode: CryptoJS.mode.CBC,
