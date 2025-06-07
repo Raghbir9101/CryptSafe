@@ -85,7 +85,7 @@ export default function SharePage() {
         return
       }
 
-      setTable(res.data.table)
+      setTable(decryptObjectValues(res.data.table,"dafsdf"))
     } catch (error) {
       console.error("Failed to update table:", error)
     }
