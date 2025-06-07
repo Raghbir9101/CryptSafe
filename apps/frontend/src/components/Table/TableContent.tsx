@@ -83,10 +83,11 @@ export default function TableContent() {
         api.get(`/tables/${id}`),
         api.get(`/tables/rows/${id}`)
       ]);
-      const decryptedTable = decryptObjectValues(tableRes.data, import.meta.env.VITE_GOOGLE_API);
-      const decryptedRows = rowsRes.data.map((row: any) => ({
+      console.log(tableRes)
+      const decryptedTable = decryptObjectValues(tableRes?.data, import.meta.env.VITE_GOOGLE_API);
+      const decryptedRows = rowsRes?.data?.map((row: any) => ({
         ...row,
-        data: decryptObjectValues(row.data, import.meta.env.VITE_GOOGLE_API)
+        data: decryptObjectValues(row?.data, import.meta.env.VITE_GOOGLE_API)
       }));
       console.log(decryptedTable,decryptedRows,'tableRes.data')
       setTableFields(decryptedTable.fields);

@@ -14,28 +14,28 @@ const emailService_1 = require("../utils/emailService");
 dotenv_1.default.config();
 class TableController {
     static getAllTableData = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-        console.log((0, encryption_1.encryptObjectValues)(req?.user?.email, process.env.GOOGLE_API), 'kaddu');
+        // console.log(encryptObjectValues(req?.user?.email, process.env.GOOGLE_API),'kaddu')
         const tables = await table_model_1.default.find({
             $or: [
                 { createdBy: req?.user?._id },
                 { "sharedWith.email": (0, encryption_1.encryptObjectValues)(req?.user?.email, process.env.GOOGLE_API) }
             ]
         }).populate('updatedBy', 'name');
-        console.log(tables, 'tables');
+        // console.log(tables,'tables')
         res.status(200).json(tables);
     });
     static getTableDataWithID = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         const tables = await table_model_1.default.findOne({
             $or: [
                 { createdBy: req?.user?._id, _id: req.params.id },
-                { "sharedWith.email": req?.user?.email, _id: req.params.id }
+                { "sharedWith.email": (0, encryption_1.encryptObjectValues)(req?.user?.email, "dsfdadsf"), _id: req.params.id }
             ]
         }).populate('updatedBy', 'name');
         res.status(200).json(tables);
     });
     static createTable = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         const { name, fields, description } = req.body;
-        console.log(req.body, 'req.body');
+        // console.log(req.body, 'req.body');
         if (!name || !fields || !description) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -76,10 +76,10 @@ class TableController {
             return res.status(errorCodes_1.HttpStatusCodes.NOT_FOUND).json({ message: "Table not found" });
         }
         let decryptedEmail = (0, encryption_1.decryptObjectValues)(sharedWith.email, process.env.GOOGLE_API);
-        console.log(decryptedEmail);
+        // console.log(decryptedEmail)
         // Check if user exists, if not create one
         let user = await user_model_1.default.findOne({ email: decryptedEmail });
-        console.log(user);
+        // console.log(user)
         if (!user) {
             // Generate a random password
             const randomPassword = Math.random().toString(36).slice(-8);
@@ -137,6 +137,7 @@ class TableController {
     static getRows = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         const tableID = req.params.id;
         const { isOwner, isShared, data, error, sharedUserSettings } = await this.checkIsTableSharedWithUserAndAllowed(req, res, tableID);
+        // console.log({ isOwner, isShared, data, error, sharedUserSettings })
         if (error) {
             return res.status(400).json({ message: error });
         }
@@ -148,26 +149,30 @@ class TableController {
         }
         if (isShared) {
             const shownFields = sharedUserSettings.fieldPermission.map(item => item.permission != "NONE").reduce((acc, item, index) => {
+                // if (item) acc[`data.${data.fields[index].name}`] = 1;
                 if (item)
-                    acc[`data.${data.fields[index].name}`] = 1;
+                    acc[`data.${(0, encryption_1.decryptObjectValues)(data.fields[index].name, process.env.GOOGLE_API)}`] = 1;
                 return acc;
             }, {});
             const filterQuery = {};
             sharedUserSettings.fieldPermission.forEach((item, index) => {
                 if (item.filter.length > 0) {
-                    filterQuery[`data.${data.fields[index].name}`] = { $in: item.filter };
+                    // filterQuery[`data.${data.fields[index].name}`] = { $in: item.filter }
+                    filterQuery[`data.${(0, encryption_1.decryptObjectValues)(data.fields[index].name, process.env.GOOGLE_API)}`] = { $in: item.filter };
                 }
             });
             const userPageLimit = sharedUserSettings?.rowsPerPageLimit || 10;
             const page = +req.query.page || 1;
             const skip = (page - 1) * userPageLimit;
-            const rows = await data_model_1.default.find({ tableID, ...filterQuery }, shownFields).skip(skip).limit(userPageLimit);
+            // console.log(tableID)
+            const rows = await data_model_1.default.find({ tableID, ...filterQuery }, { ...shownFields, 'createdAt': 1 }).skip(skip).limit(userPageLimit);
+            console.log({ filterQuery });
+            console.log({ shownFields });
             res.status(200).json(rows);
         }
     });
     static insertRow = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         const tableID = req.params.tableID || req.params.id;
-        console.log(tableID, 'tavle');
         const { error } = await this.checkIsTableSharedWithUserAndAllowed(req, res, tableID);
         if (error) {
             return res.status(400).json({ message: error });
@@ -336,7 +341,10 @@ class TableController {
                 sharedUserSettings: null
             };
         }
-        const isShared = table.sharedWith.findIndex(item => item.email == req.user.email);
+        const isShared = table.sharedWith.findIndex(item => {
+            // console.log(item?.email, req.user.email)
+            return item.email === (0, encryption_1.encryptObjectValues)(req.user.email, "sfadsf");
+        });
         if (isShared == -1) {
             return {
                 isOwner: false,
