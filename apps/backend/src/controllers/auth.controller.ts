@@ -86,20 +86,29 @@ export default class AuthController {
         } as jwt.SignOptions);
 
         const { password: _, ...userWithoutPassword } = user;
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+
         res.cookie('authorization', token, {
             maxAge: 1000 * 60 * 60 * 24 * 7,
-            secure: true,
-            sameSite: "none",
+            secure: isSecure,
+            sameSite: isSecure ? 'none' : 'lax',
             httpOnly: true
         });
+        // res.cookie('authorization', token, {
+        //     maxAge: 1000 * 60 * 60 * 24 * 7,
+        //     secure: true,
+        //     sameSite: "none",
+        //     httpOnly: true
+        // });
 
         res.status(HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
 
     static logoutUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
         res.cookie('authorization', null, {
-            secure: true,
-            sameSite: "none",
+            secure: isSecure,
+            sameSite: isSecure ? 'none' : 'lax',
             httpOnly: true
         });
 
@@ -308,15 +317,15 @@ export default class AuthController {
         const { userId, newPassword, confirmPassword } = req.body;
 
         if (!userId || !newPassword || !confirmPassword) {
-            res.status(HttpStatusCodes.BAD_REQUEST).json({ 
-                message: 'User ID, new password and confirm password are required' 
+            res.status(HttpStatusCodes.BAD_REQUEST).json({
+                message: 'User ID, new password and confirm password are required'
             });
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            res.status(HttpStatusCodes.BAD_REQUEST).json({ 
-                message: 'Passwords do not match' 
+            res.status(HttpStatusCodes.BAD_REQUEST).json({
+                message: 'Passwords do not match'
             });
             return;
         }
@@ -339,7 +348,7 @@ export default class AuthController {
             passwordReset: true
         });
 
-        res.status(HttpStatusCodes.OK).json({ 
+        res.status(HttpStatusCodes.OK).json({
             message: 'Password reset successful',
             user: {
                 ...user.toObject(),
