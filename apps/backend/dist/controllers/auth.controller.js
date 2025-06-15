@@ -105,18 +105,26 @@ class AuthController {
             expiresIn: '1h'
         });
         const { password: _, ...userWithoutPassword } = user;
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
         res.cookie('authorization', token, {
             maxAge: 1000 * 60 * 60 * 24 * 7,
-            secure: true,
-            sameSite: "none",
+            secure: isSecure,
+            sameSite: isSecure ? 'none' : 'lax',
             httpOnly: true
         });
+        // res.cookie('authorization', token, {
+        //     maxAge: 1000 * 60 * 60 * 24 * 7,
+        //     secure: true,
+        //     sameSite: "none",
+        //     httpOnly: true
+        // });
         res.status(errorCodes_1.HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
     static logoutUser = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
         res.cookie('authorization', null, {
-            secure: true,
-            sameSite: "none",
+            secure: isSecure,
+            sameSite: isSecure ? 'none' : 'lax',
             httpOnly: true
         });
         res.status(errorCodes_1.HttpStatusCodes.OK).json({ message: 'Logout successful' });
