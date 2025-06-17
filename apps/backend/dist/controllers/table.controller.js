@@ -137,19 +137,26 @@ class TableController {
     static getRows = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         const tableID = req.params.id;
         const { isOwner, isShared, data, error, sharedUserSettings } = await this.checkIsTableSharedWithUserAndAllowed(req, res, tableID);
-        // console.log({ isOwner, isShared, data, error, sharedUserSettings })
         if (error) {
             return res.status(400).json({ message: error });
         }
         if (isOwner) {
             const page = +req.query.page || 1;
-            const skip = (page - 1) * (+req.query.limit || 10);
-            const rows = await data_model_1.default.find({ tableID }).skip(skip).limit(10);
-            return res.status(200).json(rows);
+            const limit = +req.query.limit || 10;
+            const skip = (page - 1) * limit;
+            const [rows, total] = await Promise.all([
+                data_model_1.default.find({ tableID }).skip(skip).limit(limit),
+                data_model_1.default.countDocuments({ tableID })
+            ]);
+            return res.status(200).json({
+                rows,
+                total,
+                page,
+                limit
+            });
         }
         if (isShared) {
             const shownFields = sharedUserSettings.fieldPermission.map(item => item.permission != "NONE").reduce((acc, item, index) => {
-                // if (item) acc[`data.${data.fields[index].name}`] = 1;
                 if (item)
                     acc[`data.${(0, encryption_1.decryptObjectValues)(data.fields[index].name, process.env.GOOGLE_API)}`] = 1;
                 return acc;
@@ -157,18 +164,22 @@ class TableController {
             const filterQuery = {};
             sharedUserSettings.fieldPermission.forEach((item, index) => {
                 if (item.filter.length > 0) {
-                    // filterQuery[`data.${data.fields[index].name}`] = { $in: item.filter }
                     filterQuery[`data.${(0, encryption_1.decryptObjectValues)(data.fields[index].name, process.env.GOOGLE_API)}`] = { $in: item.filter };
                 }
             });
             const userPageLimit = sharedUserSettings?.rowsPerPageLimit || 10;
             const page = +req.query.page || 1;
             const skip = (page - 1) * userPageLimit;
-            // console.log(tableID)
-            const rows = await data_model_1.default.find({ tableID, ...filterQuery }, { ...shownFields, 'createdAt': 1 }).skip(skip).limit(userPageLimit);
-            console.log({ filterQuery });
-            console.log({ shownFields });
-            res.status(200).json(rows);
+            const [rows, total] = await Promise.all([
+                data_model_1.default.find({ tableID, ...filterQuery }, { ...shownFields, 'createdAt': 1 }).skip(skip).limit(userPageLimit),
+                data_model_1.default.countDocuments({ tableID, ...filterQuery })
+            ]);
+            return res.status(200).json({
+                rows,
+                total,
+                page,
+                limit: userPageLimit
+            });
         }
     });
     static insertRow = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
