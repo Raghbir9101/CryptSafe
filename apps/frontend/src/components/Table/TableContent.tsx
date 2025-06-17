@@ -377,7 +377,7 @@ export default function TableContent() {
 
   const formatValue = (value: any, type: string) => {
     if (type === 'BOOLEAN') {
-      return value === true ? 'Yes' : 'No';
+      return value === true || value === 'true' ? 'Yes' : 'No';
     }
     if (!value) return '';
     if (type === 'DATE') {
@@ -459,8 +459,10 @@ export default function TableContent() {
         return (
           <div className="flex items-center h-9"> {/* Match height */}
             <Checkbox
-              checked={value || false}
-              onCheckedChange={(checked) => onChange(checked)}
+              checked={value === true || value === 'true'}
+              onCheckedChange={(checked) => {
+                onChange(checked === true);
+              }}
             />
           </div>
         );
@@ -566,7 +568,6 @@ export default function TableContent() {
   };
   const hasShowPermission = (fieldName: string) => {
     const fieldPermission = currentUserTableContent?.fieldPermission?.find((fp: any) => fp?.fieldName === fieldName);
-    console.log(fieldPermission);
     return fieldPermission?.permission === 'NONE' ? false : true;
   };
   useEffect(() => {
