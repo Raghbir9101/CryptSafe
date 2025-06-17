@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../Utils/utils';
 import { Plus, Save, X, Pencil, Trash2, ArrowUpDown, Search, ShareIcon } from 'lucide-react';
+import { parse, isValid } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -67,6 +68,7 @@ export default function TableContent() {
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [newRow, setNewRow] = useState<Record<string, any>>({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [csvPreviewData, setCsvPreviewData] = useState<Record<string, any>[] | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: '', direction: null });
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [tableData, setTableData] = useState<any>(null);
@@ -89,12 +91,12 @@ export default function TableContent() {
         ...row,
         data: decryptObjectValues(row?.data, import.meta.env.VITE_GOOGLE_API)
       }));
-      console.log(decryptedTable,decryptedRows,'tableRes.data')
+      console.log(decryptedTable, decryptedRows, 'tableRes.data')
       setTableFields(decryptedTable.fields);
       setTableData(decryptedTable);
       setRows(decryptedRows);
       // Initialize newRow with empty values for each field
-          const emptyRow = decryptedTable.fields.reduce((acc: Record<string, any>, field: TableField) => {
+      const emptyRow = decryptedTable.fields.reduce((acc: Record<string, any>, field: TableField) => {
         acc[field.name] = '';
         return acc;
       }, {});
@@ -161,7 +163,7 @@ export default function TableContent() {
       // Process the data to handle date conversions
       const processedData = { ...row.data };
       tableFields.forEach((field) => {
-        if (field.type === "DATE" && processedData[field.name]) {
+        if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
       });
@@ -196,6 +198,103 @@ export default function TableContent() {
       toast.error('Failed to delete row');
     }
   };
+  const handleBulkAdd = async (rows: Record<string, any>[]) => {
+    try {
+      // Process all rows and validate against table fields
+      const processedRows = rows.map(row => {
+        const processedData = { ...row };
+        tableFields.forEach((field) => {
+          if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
+            // Ensure date is in ISO format
+            processedData[field.name] = new Date(processedData[field.name]).toISOString();
+          }
+        });
+        return processedData;
+      });
+
+      // Encrypt all rows
+      const encryptedData = processedRows.map(row =>
+        encryptObjectValues(row, import.meta.env.VITE_GOOGLE_API)
+      );
+
+      // Send to server
+      await api.post(`/tables/insert-bulk/${id}`, encryptedData);
+
+      // Refresh table data
+      await fetchTableData();
+
+      // Show success message
+      toast.success(`Successfully added ${rows.length} records`);
+
+      return true;
+    } catch (error: any) {
+      console.error('Error adding rows:', error);
+      toast.error(error.response?.data?.message || 'Failed to add records');
+      return false;
+    }
+  };
+
+  const handleImportRows = async () => {
+    try {
+      const addPromises = [];
+      // Validate required fields
+      for (let newRow of csvPreviewData || []) {
+
+        const missingFields = tableFields
+          .filter(field => field.required)
+          .filter(field => !newRow[field.name]);
+
+        if (missingFields.length > 0) {
+          toast.error(`Please fill in required fields: ${missingFields.map(f => f.name).join(', ')}`);
+          return;
+        }
+
+        // Check for unique constraints
+        const uniqueFields = tableFields.filter(field => field.unique);
+        for (const field of uniqueFields) {
+          const value = newRow[field.name];
+          if (value) {
+            const existingRow = rows.find(row => row.data[field.name] === value);
+            if (existingRow) {
+              toast.error(`${field.name} must be unique. Value "${value}" already exists.`);
+              return;
+            }
+          }
+        }
+
+        // Process the data to handle date conversions
+        const processedData = { ...newRow };
+        tableFields.forEach((field) => {
+          if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
+            processedData[field.name] = new Date(processedData[field.name]).toISOString();
+          }
+        });
+        // const encryptedData = encryptObjectValues(processedData, import.meta.env.VITE_GOOGLE_API);
+        // const response = await api.post(`/tables/insert/${id}`, encryptedData);
+        // const decryptedResponse = decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API);
+        // setRows([...rows, decryptedResponse.row]);
+
+        const encryptedData = encryptObjectValues(processedData, import.meta.env.VITE_GOOGLE_API);
+        addPromises.push(api.post(`/tables/insert/${id}`, encryptedData))
+        // const decryptedResponse = decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API);
+        // setRows([...rows, decryptedResponse.row]);
+      }
+
+      const responses = await Promise.all(addPromises);
+      const newRows = responses.map(response => decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API).row);
+      setRows([...rows, ...newRows]);
+      setCsvPreviewData(null); // Clear preview data after import
+      setIsAddModalOpen(false);
+      toast.success('Rows added successfully');
+    } catch (error: any) {
+      console.error('Error adding row:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to add row');
+      }
+    }
+  };
 
   const handleAddRow = async () => {
     try {
@@ -225,7 +324,7 @@ export default function TableContent() {
       // Process the data to handle date conversions
       const processedData = { ...newRow };
       tableFields.forEach((field) => {
-        if (field.type === "DATE" && processedData[field.name]) {
+        if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
       });
@@ -313,10 +412,35 @@ export default function TableContent() {
       case 'DATE':
         return (
           <Input
+            type="date"
+            value={value ? new Date(value).toISOString().split('T')[0] : ''}
+            onChange={(e) => {
+              const dateValue = e.target.value;
+              if (dateValue) {
+                const date = new Date(dateValue + 'T00:00:00.000Z');
+                onChange(date.toISOString());
+              } else {
+                onChange('');
+              }
+            }}
+            className={`${baseInputClass} `}
+          />
+        );
+      case 'DATE-TIME':
+        return (
+          <Input
             type="datetime-local"
-            value={value ? new Date(value).toISOString().slice(0, 16) : ''}
-            onChange={(e) => onChange(e.target.value)}
-            className={baseInputClass}
+            value={value ? new Date(value).toLocaleString('sv', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(' ', 'T') : ''}
+            onChange={(e) => {
+              const dateTimeValue = e.target.value;
+              if (dateTimeValue) {
+                const date = new Date(dateTimeValue);
+                onChange(date.toISOString());
+              } else {
+                onChange('');
+              }
+            }}
+            className={`${baseInputClass} min-w-[200px]`}
           />
         );
       case 'BOOLEAN':
@@ -433,56 +557,323 @@ export default function TableContent() {
     const user = tableData?.sharedWith?.find((per: any) => per.email === Auth.value.loggedInUser?.email)
     setCurrentUserTableContent(user);
   }, [tableData])
+
+  const [openCsvContent, setOpenCsvContent] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const csvReader = async (e) => {
+    const file = e.target.files?.[0];
+    console.log('CSV Reader triggered', file);
+    if (!file) {
+      toast.error('No file selected');
+      return;
+    }
+    if (file.type !== 'text/csv') {
+      toast.error('Please upload a valid CSV file');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const csvData = e.target?.result as string;
+      const rows = csvData.split('\n').map(row => row.split(','));
+      if (rows.length === 0) {
+        toast.error('CSV file is empty');
+        return;
+      } const headers = rows[0].map(h => h.trim());
+      const tableFieldNames = tableFields.map(f => f.name);
+
+      // Validate headers match table fields
+      const missingFields = tableFieldNames.filter(field => !headers.includes(field));
+      const extraFields = headers.filter(header => !tableFieldNames.includes(header));
+
+      if (missingFields.length > 0) {
+        toast.error(`Missing required columns: ${missingFields.join(', ')}`);
+        return;
+      }
+
+      if (extraFields.length > 0) {
+        toast.error(`Unknown columns: ${extraFields.join(', ')}`);
+        return;
+      }
+
+      const newRows: Record<string, any>[] = [];
+      const errors: string[] = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length !== headers.length) continue; // Skip malformed rows
+
+        const rowData: Record<string, any> = {};
+        const rowNum = i + 1;
+        let isValidRow = true;
+
+        headers.forEach((header, index) => {
+          const value = row[index].trim();
+          const field = tableFields.find(f => f.name === header);
+
+          if (field) {
+            try {
+              // Type validation
+              switch (field.type) {
+                case 'NUMBER':
+                  if (value && isNaN(Number(value))) {
+                    errors.push(`Row ${rowNum}: "${value}" is not a valid number for column "${header}"`);
+                    isValidRow = false;
+                  }
+                  rowData[header] = value ? Number(value) : null;
+                  break;
+                case 'DATE':
+                case 'DATE-TIME':
+                  if (value) {
+                    // Try different date formats
+                    const dateFormats = [
+                      'yyyy-MM-dd',           // 2023-12-31
+                      'dd/MM/yyyy',           // 31/12/2023
+                      'MM/dd/yyyy',           // 12/31/2023
+                      'dd-MM-yyyy',           // 31-12-2023
+                      'MM-dd-yyyy',           // 12-31-2023
+                      'dd.MM.yyyy',           // 31.12.2023
+                      'yyyy-MM-dd HH:mm',     // 2023-12-31 15:30
+                      'dd/MM/yyyy HH:mm',     // 31/12/2023 15:30
+                      'MM/dd/yyyy HH:mm',     // 12/31/2023 15:30
+                      'yyyy-MM-dd\'T\'HH:mm', // 2023-12-31T15:30
+                    ];
+
+                    let parsedDate = null;
+                    // Try to parse with each format until one works
+                    for (const format of dateFormats) {
+                      const attemptParse = parse(value, format, new Date());
+                      if (isValid(attemptParse)) {
+                        parsedDate = attemptParse;
+                        break;
+                      }
+                    }
+
+                    if (!parsedDate) {
+                      // If no format worked, try native Date parsing as last resort
+                      const nativeDate = new Date(value);
+                      if (isValid(nativeDate)) {
+                        parsedDate = nativeDate;
+                      }
+                    }
+
+                    if (!parsedDate || !isValid(parsedDate)) {
+                      errors.push(`Row ${rowNum}: "${value}" is not a valid ${field.type.toLowerCase()} for column "${header}". Try formats like: YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY`);
+                      isValidRow = false;
+                    }
+                    rowData[header] = parsedDate ? parsedDate.toISOString() : null;
+                  } else {
+                    rowData[header] = null;
+                  }
+                  break;
+
+                case 'BOOLEAN':
+                  const boolValue = value.toLowerCase();
+                  if (value && !['true', 'false', '1', '0', 'yes', 'no'].includes(boolValue)) {
+                    errors.push(`Row ${rowNum}: "${value}" is not a valid boolean for column "${header}"`);
+                    isValidRow = false;
+                  }
+                  rowData[header] = ['true', '1', 'yes'].includes(boolValue);
+                  break;
+
+                case 'SELECT':
+                  if (value && field.options && !field.options.includes(value)) {
+                    errors.push(`Row ${rowNum}: "${value}" is not a valid option for column "${header}". Valid options: ${field.options.join(', ')}`);
+                    isValidRow = false;
+                  }
+                  rowData[header] = value;
+                  break;
+
+                default:
+                  rowData[header] = value;
+              }
+
+              // Required field validation
+              if (field.required && !value) {
+                errors.push(`Row ${rowNum}: "${header}" is required but empty`);
+                isValidRow = false;
+              }
+
+              // Unique field validation (only against other imported rows)
+              if (field.unique && value) {
+                const duplicate = newRows.find(r => r[header] === value);
+                if (duplicate) {
+                  errors.push(`Row ${rowNum}: "${value}" in column "${header}" is duplicate. Values must be unique.`);
+                  isValidRow = false;
+                }
+              }
+            } catch (error) {
+              errors.push(`Row ${rowNum}: Error processing "${header}": ${error.message}`);
+              isValidRow = false;
+            }
+          }
+        });
+
+        if (isValidRow) {
+          newRows.push(rowData);
+        }
+      }
+
+      if (errors.length > 0) {
+        console.log('Validation errors:', errors);
+        toast.error(
+          <div>
+            <p>Found {errors.length} validation errors:</p>
+            <ul className="mt-2 list-disc list-inside">
+              {errors.slice(0, 5).map((error, i) => (
+                <li key={i} className="text-sm">{error}</li>
+              ))}
+              {errors.length > 5 && <li className="text-sm">...and {errors.length - 5} more errors</li>}
+            </ul>
+          </div>
+        );
+        return;
+      }
+
+      if (newRows.length === 0) {
+        toast.error('No valid rows found in CSV file');
+        return;
+      }
+
+      try {
+        setCsvPreviewData(newRows);
+        setOpenCsvContent(true);
+      } catch (error: any) {
+        console.error('Error importing records:', error);
+        toast.error(error.response?.data?.message || 'Failed to import records');
+      }
+    };
+    reader.readAsText(file);
+  }
+
   return (
     <div className='container mx-auto px-6 py-20'>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-tight mb-6">Table Content</h1>
-          {canAddRow() && (
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen} >
+          <div className='flex items-center gap-2'>
+            <Dialog open={openCsvContent} onOpenChange={setOpenCsvContent} >
               <DialogTrigger asChild>
-                <Button className='bg-[#405fe8] hover:bg-[#1f3fcc] cursor-pointer'>
+                <Button onClick={() => csvInputRef.current.click()} className='bg-[#405fe8] hover:bg-[#1f3fcc] cursor-pointer'>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Record
+                  Import Records
+                  <input type="file" hidden ref={csvInputRef} accept=".csv" onChange={csvReader} />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
+              <DialogContent style={{ maxWidth: "none" }} className="w-[98vw] h-[95vh]">
                 <DialogHeader>
-                  <DialogTitle>Add New Row</DialogTitle>
+                  <DialogTitle>CSV Import Preview</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  {tableFields.map((field) => (
-                    <div key={field.name} className="grid gap-2">
-                      <Label htmlFor={field.name}>
-                        {field.name}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                      </Label>
-                      {field.description && (
-                        <p className="text-sm text-muted-foreground">{field.description}</p>
-                      )}
-                      {hasWritePermission(field.name) ? (
-                        renderInputField(field, newRow[field.name], (value) =>
-                          handleInputChange(null, field.name, value)
-                        )
-                      ) : (
-                        <div className="text-sm text-muted-foreground">
-                          You don't have permission to edit this field
+                <div className="flex flex-col h-[calc(95vh-150px)]">
+                  {csvPreviewData ? (
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex-1 relative">
+                        <div className="absolute inset-0 overflow-auto">
+                          <div className="inline-block min-w-full">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  {Object.keys(csvPreviewData[0] || {}).map((header) => (
+                                    <TableHead key={header} className="min-w-[200px] sticky top-0 bg-white z-10">{header}</TableHead>
+                                  ))}
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {csvPreviewData.map((row, index) => (
+                                  <TableRow key={index}>
+                                    {Object.values(row).map((value, i) => (
+                                      <TableCell key={i} className="whitespace-nowrap">{value as string}</TableCell>
+                                    ))}
+                                  </TableRow>
+                                ))}                              
+                                </TableBody>
+                            </Table>
+                          </div>
                         </div>
-                      )}
+                      </div>
+                      <div className="flex justify-end items-center gap-2 mt-4">
+                        <span className="text-sm text-muted-foreground">
+                          {csvPreviewData.length} records found
+                        </span>
+                        <div className="flex-1" />
+                        <Button variant="outline" onClick={() => {
+                          setOpenCsvContent(false);
+                          setCsvPreviewData(null);
+                        }}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleImportRows}>                          
+                        Import All Records
+                        </Button>
+                        <Button onClick={async () => {
+                          const success = await handleBulkAdd(csvPreviewData);
+                          if (success) {
+                            setOpenCsvContent(false);
+                            setCsvPreviewData(null);
+                          }
+                        }} className="bg-[#405fe8] hover:bg-[#1f3fcc]">
+                          Add to Table
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddRow}>
-                      Add Record
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p>Select a CSV file to preview data</p>
+                      <Button onClick={() => csvInputRef.current.click()} className='bg-[#405fe8] hover:bg-[#1f3fcc] cursor-pointer'>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Import Records
+                        <input type="file" hidden ref={csvInputRef} accept=".csv" onChange={csvReader} />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
-          )}
+            {canAddRow() && (
+              <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className='bg-[#405fe8] hover:bg-[#1f3fcc] cursor-pointer'>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Record
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Add New Row</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    {tableFields.map((field) => (
+                      <div key={field.name} className="grid gap-2">
+                        <Label htmlFor={field.name}>
+                          {field.name}
+                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
+                        {field.description && (
+                          <p className="text-sm text-muted-foreground">{field.description}</p>
+                        )}
+                        {hasWritePermission(field.name) ? (
+                          renderInputField(field, newRow[field.name], (value) =>
+                            handleInputChange(null, field.name, value)
+                          )
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            You don't have permission to edit this field
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddRow}>
+                        Add Record
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
 
         <div className="rounded-lg border bg-white text-card-foreground shadow-[0_8px_30px_rgb(0,0,0,0.18)] max-h-[calc(100vh-12rem)] overflow-auto">
@@ -591,9 +982,18 @@ export default function TableContent() {
                             </div>
                           ) : (
                             <div className="px-2 h-[24px] flex items-center">
-                              <span className="truncate">
-                                {formatValue(row.data[field.name], field.type)}
-                              </span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="truncate">
+                                      {formatValue(row.data[field.name], field.type)}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-[300px] break-words">
+                                    <p className="whitespace-pre-wrap">{formatValue(row.data[field.name], field.type)}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           )}
                         </TableCell>

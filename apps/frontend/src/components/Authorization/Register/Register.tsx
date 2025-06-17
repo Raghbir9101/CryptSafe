@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Shield, Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { register } from '@/components/Services/AuthService';
 import { encryptObjectValues } from '@/components/Services/encrption';
+import { configuration } from "@/Utils/utils";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ export default function Register() {
       // }
 
       toast.success("Account Created Successfully", {
-        description: "Welcome to CryptSafe! Please sign in with your new account.",
+        description: `Welcome to ${configuration.name}! Please sign in with your new account.`,
       });
 
       navigate('/login');
@@ -108,7 +109,7 @@ export default function Register() {
         <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-lg border border-white/20">
           <CardHeader className="space-y-1 pb-8 text-center">
             <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
-              Join CryptSafe
+              Join {configuration.name}
             </CardTitle>
             <p className="text-gray-600 text-lg">Start protecting your data today</p>
           </CardHeader>

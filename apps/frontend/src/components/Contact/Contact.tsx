@@ -8,6 +8,7 @@ import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Shield, Users } from "
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Footer } from "../Footer/Footer";
+import { configuration } from "@/Utils/utils";
 
 const Contact = () => {
     const navigate = useNavigate();
@@ -29,37 +30,6 @@ const Contact = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const contactMethods = [
-        {
-            icon: Mail,
-            title: "Email Us",
-            description: "Get in touch via email",
-            contact: "security@cryptsafe.com",
-            available: "24/7 Response"
-        },
-        {
-            icon: Phone,
-            title: "Call Us",
-            description: "Speak with our security experts",
-            contact: "+1 (555) 123-4567",
-            available: "Mon-Fri 9AM-6PM EST"
-        },
-        // {
-        //   icon: MapPin,
-        //   title: "Visit Us",
-        //   description: "Our secure headquarters",
-        //   contact: "123 Security Blvd, Tech City, TC 12345",
-        //   available: "By appointment only"
-        // },
-        // {
-        //   icon: MessageSquare,
-        //   title: "Live Chat",
-        //   description: "Instant support available",
-        //   contact: "Available on website",
-        //   available: "24/7 Support"
-        // }
-    ];
-
     const inquiryTypes = [
         { value: "general", label: "General Inquiry" },
         { value: "sales", label: "Sales & Pricing" },
@@ -80,7 +50,7 @@ const Contact = () => {
                             Get in Touch
                         </Badge>
                         <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight">
-                            Contact CryptSafe
+                            Contact {configuration.name}
                         </h1>
                         <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                             Ready to secure your organization's data? Our security experts are here to help you
@@ -88,10 +58,9 @@ const Contact = () => {
                         </p>
                     </div>
 
-                    <div className="grid lg:grid-cols-2 gap-12 mb-20">
-                        {/* Contact Form */}
+                    <div className="max-w-4xl mx-auto px-4">
                         <div className="flex flex-col space-y-8">
-                            <div>
+                            <div className="text-center">
                                 <h2 className="text-3xl font-bold text-gray-900 mb-6">Send Us a Message</h2>
                                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
                                     Fill out the form below and we'll get back to you within 24 hours.
@@ -154,7 +123,7 @@ const Contact = () => {
                                             <Label htmlFor="message">Message *</Label>
                                             <Textarea
                                                 id="message"
-                                                placeholder="Tell us about your security needs, current challenges, or any questions you have about CryptSafe..."
+                                                placeholder={`Tell us about your security needs, current challenges, or any questions you have about ${configuration.name}...`}
                                                 rows={6}
                                                 value={formData.message}
                                                 onChange={(e) => handleInputChange("message", e.target.value)}
@@ -173,65 +142,6 @@ const Contact = () => {
                                 </CardContent>
                             </Card>
                         </div>
-
-                        {/* Contact Information */}
-                        <div className="space-y-8">
-                            <div>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-6">Get in Touch</h2>
-                                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                                    Our team of security experts is available to discuss your specific requirements
-                                    and help you implement the right security solution.
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {contactMethods?.map((method, index) => (
-                                    <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
-                                        <CardContent className="px-6 py-2">
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                    <method.icon className="w-6 h-6 text-white" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="font-semibold text-gray-900 mb-1">{method.title}</h3>
-                                                    <p className="text-sm text-gray-600 mb-2">{method.description}</p>
-                                                    <p className="font-medium text-blue-600">{method.contact}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">{method.available}</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-
-                            {/* Quick Links */}
-                            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                                <CardContent className="p-6">
-                                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                        <Clock className="w-5 h-5 text-blue-600" />
-                                        Need Immediate Help?
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-blue-600 border-blue-200 hover:bg-blue-50"
-                                            onClick={() => navigate("/about")}
-                                        >
-                                            <Shield className="w-4 h-4 mr-2" />
-                                            View Security Features
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-blue-600 border-blue-200 hover:bg-blue-50"
-                                            onClick={() => navigate("/login")}
-                                        >
-                                            <Users className="w-4 h-4 mr-2" />
-                                            Start Free Trial
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
                     </div>
 
                     {/* FAQ Section */}
@@ -240,16 +150,16 @@ const Contact = () => {
                         <div className="grid md:grid-cols-2 gap-8">
                             {[
                                 {
-                                    question: "How quickly can CryptSafe be deployed?",
-                                    answer: "Most organizations can have CryptSafe fully deployed within 1-2 weeks, including user training and security configuration."
+                                    question: `How quickly can ${configuration.name} be deployed?`,
+                                    answer: `Most organizations can have ${configuration.name} fully deployed within 1-2 weeks, including user training and security configuration.`
                                 },
                                 {
-                                    question: "Is CryptSafe compliant with industry standards?",
-                                    answer: "Yes, CryptSafe meets HIPAA, GDPR, and SOC 2 Type II standards with comprehensive audit trails and access controls."
+                                    question: `Is ${configuration.name} compliant with industry standards?`,
+                                    answer: `Yes, ${configuration.name} meets HIPAA, GDPR, and SOC 2 Type II standards with comprehensive audit trails and access controls.`
                                 },
                                 {
-                                    question: "Can CryptSafe integrate with existing systems?",
-                                    answer: "CryptSafe offers APIs and integrations with major enterprise systems, SSO providers, and workflow tools."
+                                    question: `Can ${configuration.name} integrate with existing systems?`,
+                                    answer: `${configuration.name} offers APIs and integrations with major enterprise systems, SSO providers, and workflow tools.`
                                 },
                                 {
                                     question: "What kind of support do you provide?",

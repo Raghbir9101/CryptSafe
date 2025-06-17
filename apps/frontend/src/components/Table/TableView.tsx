@@ -58,8 +58,26 @@ const TableView: React.FC<TableViewProps> = ({ fields, initialData = [] }) => {
         return (
           <TextField
             type="date"
-            value={value || ''}
+            value={value ? new Date(value).toISOString().split('T')[0] : ''}
             onChange={(e) => onChange(e.target.value)}
+            size="small"
+            fullWidth
+          />
+        );
+      case 'DATE-TIME':
+        return (
+          <TextField
+            type="datetime-local"
+            value={value ? new Date(value).toLocaleString('sv', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(' ', 'T') : ''}
+            onChange={(e) => {
+              const dateTimeValue = e.target.value;
+              if (dateTimeValue) {
+                const date = new Date(dateTimeValue);
+                onChange(date.toISOString());
+              } else {
+                onChange('');
+              }
+            }}
             size="small"
             fullWidth
           />

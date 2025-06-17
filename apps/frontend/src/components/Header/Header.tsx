@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Shield, Menu, X, Plus, LogOut, LogIn, Database, Home, Info, Mail, Settings } from "lucide-react";
 import { isAuthenticated, logout, getUser, getUserAfterRefresh, Auth } from "../Services/AuthService";
+import { configuration } from "@/Utils/utils";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -41,7 +42,7 @@ export function Header() {
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/about", label: "About", icon: Info },
-    { path: "/contact", label: "Contact", icon: Mail },
+    // { path: "/contact", label: "Contact", icon: Mail },
   ];
 
   return (
@@ -65,7 +66,7 @@ export function Header() {
               <Shield className="h-8 w-8 text-blue-600 group-hover:text-blue-700 transition-colors duration-300 group-hover:scale-110 transform" />
               <div className="absolute inset-0 h-8 w-8 text-blue-600 opacity-20 group-hover:opacity-40 animate-pulse"></div>
             </div>
-            <span className="font-black tracking-tight">CryptSafe</span>
+            <span className="font-black tracking-tight">{configuration.name}</span>
           </NavLink>
 
           {/* Desktop Navigation */}

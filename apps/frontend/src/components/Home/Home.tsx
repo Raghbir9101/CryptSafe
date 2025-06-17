@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, Clock, MapPin, Users, FileCheck, Eye, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Footer } from "../Footer/Footer";
+import { configuration } from "@/Utils/utils";
 
 const Home = () => {
     const navigate = useNavigate();
@@ -65,7 +66,7 @@ const Home = () => {
                                 🛡️ Enterprise Security Platform
                             </Badge>
                             <h1 className="text-6xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight">
-                                CryptSafe
+                                {configuration.name}
                             </h1>
                             <p className="text-2xl text-gray-700 mb-4 font-semibold">
                                 Secure Data Management System
@@ -176,7 +177,7 @@ const Home = () => {
                     <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 text-white text-center">
                         <h2 className="text-4xl font-bold mb-4">Ready to Secure Your Data?</h2>
                         <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-                            Join organizations worldwide who trust CryptSafe for their most sensitive information
+                            Join organizations worldwide who trust {configuration.name} for their most sensitive information
                         </p>
                         <div className="flex gap-4 justify-center flex-wrap">
                             <Button

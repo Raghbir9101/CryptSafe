@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form"
 import { Plus, Save, Trash2 } from "lucide-react"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -12,15 +12,16 @@ import { Switch } from "@/components/ui/switch"
 
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-// import { toast } from "@/components/ui/use-toast"
 import { useNavigate } from "react-router-dom"
 import { Label } from "../ui/label"
 import { toast } from "sonner"
 import { createTable } from "../Services/TableService"
-import {  encryptObjectValues } from "../Services/encrption"
+import { encryptObjectValues } from "../Services/encrption"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Define the field types
-const fieldTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"] as const
+// const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT", "MULTISELECT"] as const
+const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT"] as const
 
 // Define the schema for the form
 const formSchema = z.object({
@@ -124,7 +125,125 @@ export default function TableCreate() {
       required: false,
       hidden: false,
     })
-  }
+  }  
+  
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
+      if (lines.length < 2) {
+        toast.error("CSV file must have a header row and at least one field");
+        return;
+      }
+
+      // Parse and validate header row
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+      const expectedHeaders = ['fieldname', 'datatype', 'options', 'unique', 'required', 'hidden'];
+      const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+      
+      if (missingHeaders.length > 0) {
+        toast.error(`Missing required headers: ${missingHeaders.join(', ')}`);
+        return;
+      }
+
+      // Get header indices
+      const fieldName = headers.indexOf('fieldname');
+      const fieldType = headers.indexOf('datatype');
+      const fieldOptions = headers.indexOf('options');
+      const fieldUnique = headers.indexOf('unique');
+      const fieldRequired = headers.indexOf('required');
+      const fieldHidden = headers.indexOf('hidden');
+
+      // Clear existing fields safely
+      const currentLength = fields.length;
+      for (let i = currentLength - 1; i >= 0; i--) {
+        remove(i);
+      }
+
+      let successCount = 0;
+      const errors: string[] = [];
+
+      // Parse each field row
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = lines[i].split(',').map(v => v.trim());
+          console.log("values", values)
+          // Validate row length
+          if (values.length !== headers.length) {
+            errors.push(`Row ${i + 1}: Invalid number of columns`);
+            continue;
+          }
+
+          // Validate field name
+          if (!values[fieldName]) {
+            errors.push(`Row ${i + 1}: Field name is required`);
+            continue;
+          }
+
+          // Validate and normalize field type
+          const type = values[fieldType].toUpperCase();
+          if (!fieldTypes.includes(type as any)) {
+            errors.push(`Row ${i + 1}: Invalid field type "${type}"`);
+            continue;
+          }
+
+          // Parse boolean values safely
+          const toBool = (val: string) => val.toLowerCase() === 'true';
+          
+          // Clean up options string
+          let options = values[fieldOptions] || '';
+          if (options.startsWith('"') && options.endsWith('"')) {
+            options = options.slice(1, -1);
+          }
+
+          // Add the field with all validations passed
+          append({
+            name: values[fieldName],
+            type: type as any,
+            options: options.split("^").join(","),
+            unique: toBool(values[fieldUnique]),
+            required: toBool(values[fieldRequired]),
+            hidden: toBool(values[fieldHidden])
+          });
+
+          successCount++;
+        } catch (err) {
+          console.error(`Error parsing row ${i + 1}:`, err);
+          errors.push(`Row ${i + 1}: Invalid data format`);
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} fields`);
+      } else {
+        toast.error("No fields were imported");
+      }
+
+      // Show errors if any occurred
+      if (errors.length > 0) {
+        console.error("Import errors:", errors);
+        toast.error("Some rows could not be imported", {
+          description: errors.slice(0, 3).join('\n') + 
+                      (errors.length > 3 ? `\n...and ${errors.length - 3} more errors` : '')
+        });
+      }
+
+    } catch (error) {
+      console.error("Error reading CSV:", error);
+      toast.error("Error reading CSV file");
+    } finally {
+      // Reset the file input
+      event.target.value = '';
+    }
+  };
+
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     
@@ -195,6 +314,14 @@ export default function TableCreate() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardContent className="space-y-6">
+                {/* Hidden file input for CSV import */}
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                  id="csvFileInput"
+                />
                 {/* Table Basic Information */}
                 <div className="space-y-4">
                   <FormField
@@ -234,10 +361,21 @@ export default function TableCreate() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Fields</h3>
-                    <Button type="button" variant="outline" size="sm" onClick={addField} className=" flex items-center " >
-                      <Plus className="h-3 w-3" />
-                      <Label className="relative top-[-0.5px]">Add Field</Label>
-                    </Button>
+                    <div className="space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('csvFileInput')?.click()}
+                      >
+                        Import Fields
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => append({ name: '', type: 'TEXT', unique: false, required: false, hidden: false })}
+                      >
+                        Add Field
+                      </Button>
+                    </div>
                   </div>
 
                   {fields.length === 0 ? (
@@ -356,7 +494,7 @@ export default function TableCreate() {
                             </div>
 
                             {/* Options for SELECT and MULTISELECT types */}
-                            {(form.watch(`fields.${index}.type`) === "SELECT" ||
+                            {/* {(form.watch(`fields.${index}.type`) === "SELECT" ||
                               form.watch(`fields.${index}.type`) === "MULTISELECT") && (
                                 <FormField
                                   control={form.control}
@@ -380,7 +518,31 @@ export default function TableCreate() {
                                     </FormItem>
                                   )}
                                 />
-                              )}
+                              )} */}
+                              {(form.watch(`fields.${index}.type`) === "SELECT") && (
+                              <FormField
+                                control={form.control}
+                                name={`fields.${index}.options`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Options</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Enter options, comma seperated "
+                                        className="resize-none"
+                                        value={field.value}
+                                        onChange={(e) => {
+                                          const options = e.target.value
+                                          field.onChange(options)
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormDescription>Enter each option on a new line</FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
                           </CardContent>
                         </Card>
                       ))}

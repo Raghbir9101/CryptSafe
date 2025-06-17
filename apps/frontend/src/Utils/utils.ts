@@ -14,3 +14,6 @@ export const api = axios.create({
     baseURL: apiURL, // Update with your server URL
     withCredentials: true,
 });
+export const configuration = {
+  name:"Rorsica"
+}
