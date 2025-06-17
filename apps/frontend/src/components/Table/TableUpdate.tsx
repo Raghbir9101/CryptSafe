@@ -199,10 +199,7 @@ export default function TableUpdate() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">Fields</h3>
-                  <Button type="button" variant="outline" size="sm" onClick={addField} className=" flex items-center " >
-                    <Plus className="h-3 w-3" />
-                    <Label className="relative top-[-0.5px]">Add Field</Label>
-                  </Button>
+                  v
                 </div>
 
                 {fields.length === 0 ? (
@@ -357,6 +354,11 @@ export default function TableUpdate() {
               <Button variant="outline" type="button" onClick={() => router(-1)}>
                 Cancel
               </Button>
+              <div className="flex justify-center gap-2">
+                <Button type="button" variant="outline" onClick={addField} className=" flex items-center " >
+                      <Plus className="h-3 w-3" />
+                      <Label className="relative top-[-0.5px]">Add Field</Label>
+                    </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <span className="flex items-center">
@@ -383,12 +385,15 @@ export default function TableUpdate() {
                     Creating...
                   </span>
                 ) : (
+                  <>
                   <span className="flex items-center">
                     <Save className="mr-2 h-4 w-4" />
                     Update Table
                   </span>
+                  </>
                 )}
               </Button>
+              </div>
             </CardFooter>
           </form>
         </Form>

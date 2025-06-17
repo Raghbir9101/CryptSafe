@@ -439,14 +439,14 @@ export default function TableContent() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-tight mb-6">Table Content</h1>
           {canAddRow() && (
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen} >
               <DialogTrigger asChild>
                 <Button className='bg-[#405fe8] hover:bg-[#1f3fcc] cursor-pointer'>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Record
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Row</DialogTitle>
                 </DialogHeader>

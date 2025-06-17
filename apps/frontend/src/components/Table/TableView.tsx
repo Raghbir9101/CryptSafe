@@ -194,9 +194,9 @@ const TableView: React.FC<TableViewProps> = ({ fields, initialData = [] }) => {
       </Table>
 
       {/* Add Record Dialog */}
-      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} >
         <DialogTitle>Add New Record</DialogTitle>
-        <DialogContent>
+        <DialogContent className='max-h-[95vh] overflow-y-auto'>
           {fields.map(field => (
             <div key={field.name} style={{ marginTop: 16 }}>
               {renderInput(
