@@ -108,7 +108,7 @@ export function Header() {
                 </Button>
               )}
 
-              {isAuthenticated.value && getUser()?.isAdmin && (
+              {/* {isAuthenticated.value && getUser()?.isAdmin && (
                 <Button
                   variant="ghost"
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === "/admin"
@@ -123,7 +123,7 @@ export function Header() {
                     <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"></div>
                   )}
                 </Button>
-              )}
+              )} */}
             </nav>
 
             <div className="flex items-center gap-3">

@@ -73,28 +73,40 @@ export default function TableContent() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [tableData, setTableData] = useState<any>(null);
   const [currentUserTableContent, setCurrentUserTableContent] = useState<any>(null);
+  const [selectedStats, setSelectedStats] = useState<Record<string, string[]>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRows, setTotalRows] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const { id } = useParams();
 
   useEffect(() => {
     fetchTableData();
-  }, [id]);
+  }, [id, currentPage, rowsPerPage]);
 
   const fetchTableData = async () => {
     try {
       const [tableRes, rowsRes] = await Promise.all([
         api.get(`/tables/${id}`),
-        api.get(`/tables/rows/${id}`)
+        api.get(`/tables/rows/${id}?page=${currentPage}&limit=${rowsPerPage}`)
       ]);
-      console.log(tableRes)
+      console.log('API Response:', rowsRes.data);
       const decryptedTable = decryptObjectValues(tableRes?.data, import.meta.env.VITE_GOOGLE_API);
-      const decryptedRows = rowsRes?.data?.map((row: any) => ({
+      
+      // Handle the new response structure
+      const rowsData = rowsRes.data?.rows || [];
+      const total = rowsRes.data?.total || 0;
+      
+      const decryptedRows = rowsData.map((row: any) => ({
         ...row,
         data: decryptObjectValues(row?.data, import.meta.env.VITE_GOOGLE_API)
       }));
-      console.log(decryptedTable, decryptedRows, 'tableRes.data')
+
+      console.log('Decrypted Rows:', decryptedRows);
       setTableFields(decryptedTable.fields);
       setTableData(decryptedTable);
       setRows(decryptedRows);
+      setTotalRows(total);
+      
       // Initialize newRow with empty values for each field
       const emptyRow = decryptedTable.fields.reduce((acc: Record<string, any>, field: TableField) => {
         acc[field.name] = '';
@@ -504,6 +516,10 @@ export default function TableContent() {
   };
 
   const getSortedAndFilteredRows = () => {
+    if (!rows || !Array.isArray(rows)) {
+      return [];
+    }
+
     let filteredRows = [...rows];
 
     // Apply filters
@@ -744,6 +760,126 @@ export default function TableContent() {
     };
     reader.readAsText(file);
   }
+
+  const handleRowsPerPageChange = (value: string) => {
+    const newRowsPerPage = parseInt(value);
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to first page when changing rows per page
+  };
+
+  const renderPagination = () => {
+    if (totalRows === 0) return null;
+
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-700">
+            Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalRows)} of {totalRows} entries
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Rows per page:</span>
+            <Select
+              value={rowsPerPage.toString()}
+              onValueChange={handleRowsPerPageChange}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={rowsPerPage} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="15">15</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            First
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          {startPage > 1 && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+              >
+                1
+              </Button>
+              {startPage > 2 && <span className="px-2">...</span>}
+            </>
+          )}
+          {pageNumbers.map(number => (
+            <Button
+              key={number}
+              variant={currentPage === number ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCurrentPage(number)}
+            >
+              {number}
+            </Button>
+          ))}
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2">...</span>}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+              >
+                {totalPages}
+              </Button>
+            </>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Last
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className='container mx-auto px-6 py-20'>
@@ -1090,9 +1226,91 @@ export default function TableContent() {
                     )}
                   </TableRow>
                 ))}
+                {/* Summary Row */}
+                <TableRow className="bg-gray-50">
+                  <TableCell className="w-[200px] font-semibold">
+                    <div className="px-2 py-3 flex items-start">
+                      <span>Summary</span>
+                    </div>
+                  </TableCell>
+                  {tableFields?.filter((field) => hasShowPermission(field.name))
+                    .map((field) => {
+                      const values = getSortedAndFilteredRows()
+                        .map(row => row.data[field.name])
+                        .filter(value => value !== null && value !== undefined && value !== '');
+
+                      if (field.type === 'NUMBER') {
+                        const numbers = values.map(Number);
+                        const sum = numbers.reduce((a, b) => a + b, 0);
+                        const avg = numbers.length ? (sum / numbers.length) : 0;
+                        const max = numbers.length ? Math.max(...numbers) : 0;
+                        const min = numbers.length ? Math.min(...numbers) : 0;
+                        const count = numbers.length;
+
+                        const stats = [
+                          { label: 'Count', value: count.toString() },
+                          { label: 'Sum', value: sum.toFixed(2) },
+                          { label: 'Average', value: avg.toFixed(2) },
+                          { label: 'Max', value: max.toFixed(2) },
+                          { label: 'Min', value: min.toFixed(2) }
+                        ];
+
+                        return (
+                          <TableCell key={field.name} className="w-[200px]">
+                            <div className="px-2 py-3">
+                              <div className="flex flex-col gap-2">
+                                <Select
+                                  value={selectedStats[field.name]?.[0] || 'count'}
+                                  onValueChange={(value) => {
+                                    setSelectedStats(prev => ({
+                                      ...prev,
+                                      [field.name]: [value]
+                                    }));
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue>
+                                      {selectedStats[field.name]?.[0] === 'sum' && `Sum: ${sum.toFixed(2)}`}
+                                      {selectedStats[field.name]?.[0] === 'average' && `Average: ${avg.toFixed(2)}`}
+                                      {selectedStats[field.name]?.[0] === 'max' && `Max: ${max.toFixed(2)}`}
+                                      {selectedStats[field.name]?.[0] === 'min' && `Min: ${min.toFixed(2)}`}
+                                      {(!selectedStats[field.name]?.[0] || selectedStats[field.name]?.[0] === 'count') && `Count: ${count}`}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="count">Count: {count}</SelectItem>
+                                    <SelectItem value="sum">Sum: {sum.toFixed(2)}</SelectItem>
+                                    <SelectItem value="average">Average: {avg.toFixed(2)}</SelectItem>
+                                    <SelectItem value="max">Max: {max.toFixed(2)}</SelectItem>
+                                    <SelectItem value="min">Min: {min.toFixed(2)}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </TableCell>
+                        );
+                      } else {
+                        return (
+                          <TableCell key={field.name} className="w-[200px]">
+                            <div className="px-2 py-3 flex items-start">
+                              <span className="text-xs">Count: {values.length}</span>
+                            </div>
+                          </TableCell>
+                        );
+                      }
+                    })}
+                  {hasAnyWritePermission() && (
+                    <TableCell className="sticky right-0 bg-gray-50 z-10" />
+                  )}
+                </TableRow>
               </TableBody>
             </Table>
           </div>
+        </div>
+
+        {/* Separated Pagination */}
+        <div className="rounded-lg border bg-white text-card-foreground shadow-[0_8px_30px_rgb(0,0,0,0.18)]">
+          {renderPagination()}
         </div>
       </div>
     </div>
