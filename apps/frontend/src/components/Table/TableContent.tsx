@@ -909,9 +909,18 @@ export default function TableContent() {
                   {tableFields?.filter((field) => {
                     return hasShowPermission(field.name);
                   })?.map((field) => (
-                    <TableHead key={field?.name} className="w-[200px]">
+                    <TableHead key={field?.name} className="w-[200px] " >
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-white"> <b>{field.name}</b></span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="truncate text-white"> <b>{field.name}</b></span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{field.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Button
                             variant="ghost"
