@@ -62,6 +62,11 @@ type SortConfig = {
   direction: SortDirection;
 };
 
+type DateRangeFilter = {
+  start: string;
+  end: string;
+};
+
 export default function TableContent() {
   const [tableFields, setTableFields] = useState<TableField[]>([]);
   const [rows, setRows] = useState<TableRow[]>([]);
@@ -71,6 +76,7 @@ export default function TableContent() {
   const [csvPreviewData, setCsvPreviewData] = useState<Record<string, any>[] | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: '', direction: null });
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [dateRangeFilters, setDateRangeFilters] = useState<Record<string, DateRangeFilter>>({});
   const [tableData, setTableData] = useState<any>(null);
   const [currentUserTableContent, setCurrentUserTableContent] = useState<any>(null);
   const [selectedStats, setSelectedStats] = useState<Record<string, string[]>>({});
@@ -520,6 +526,24 @@ export default function TableContent() {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDateRangeFilter = (field: string, type: 'start' | 'end', value: string) => {
+    setDateRangeFilters(prev => ({
+      ...prev,
+      [field]: {
+        ...prev[field],
+        [type]: value
+      }
+    }));
+  };
+
+  const clearDateRangeFilter = (field: string) => {
+    setDateRangeFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[field];
+      return newFilters;
+    });
+  };
+
   const getSortedAndFilteredRows = () => {
     if (!rows || !Array.isArray(rows)) {
       return [];
@@ -527,13 +551,36 @@ export default function TableContent() {
 
     let filteredRows = [...rows];
 
-    // Apply filters
+    // Apply text filters
     Object.entries(filters).forEach(([field, value]) => {
       if (value) {
         filteredRows = filteredRows.filter(row => {
           const cellValue = row.data[field];
           if (cellValue === null || cellValue === undefined) return false;
           return cellValue.toString().toLowerCase().includes(value.toLowerCase());
+        });
+      }
+    });
+
+    // Apply date range filters
+    Object.entries(dateRangeFilters).forEach(([field, range]) => {
+      if (range.start || range.end) {
+        filteredRows = filteredRows.filter(row => {
+          const cellValue = row.data[field];
+          if (!cellValue) return false;
+          
+          const date = new Date(cellValue);
+          const startDate = range.start ? new Date(range.start) : null;
+          const endDate = range.end ? new Date(range.end) : null;
+
+          if (startDate && endDate) {
+            return date >= startDate && date <= endDate;
+          } else if (startDate) {
+            return date >= startDate;
+          } else if (endDate) {
+            return date <= endDate;
+          }
+          return true;
         });
       }
     });
@@ -555,7 +602,7 @@ export default function TableContent() {
             : Number(bValue) - Number(aValue);
         }
 
-        if (fieldType === 'DATE') {
+        if (fieldType === 'DATE' || fieldType === 'DATE-TIME') {
           return sortConfig.direction === 'asc'
             ? new Date(aValue).getTime() - new Date(bValue).getTime()
             : new Date(bValue).getTime() - new Date(aValue).getTime();
@@ -1086,14 +1133,47 @@ export default function TableContent() {
                                 <Search className="h-4 w-4 text-white" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[200px]">
+                            <DropdownMenuContent align="start" className="w-[250px]">
                               <div className="p-2">
-                                <Input
-                                  placeholder={`Filter ${field.name}...`}
-                                  value={filters[field.name] || ''}
-                                  onChange={(e) => handleFilter(field.name, e.target.value)}
-                                  className="w-full"
-                                />
+                                {(field.type === 'DATE' || field.type === 'DATE-TIME') ? (
+                                  <div className="space-y-1.5">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Start Date</Label>
+                                      <Input
+                                        type={field.type === 'DATE' ? 'date' : 'datetime-local'}
+                                        value={dateRangeFilters[field.name]?.start || ''}
+                                        onChange={(e) => handleDateRangeFilter(field.name, 'start', e.target.value)}
+                                        className="w-full h-8 text-xs"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">End Date</Label>
+                                      <Input
+                                        type={field.type === 'DATE' ? 'date' : 'datetime-local'}
+                                        value={dateRangeFilters[field.name]?.end || ''}
+                                        onChange={(e) => handleDateRangeFilter(field.name, 'end', e.target.value)}
+                                        className="w-full h-8 text-xs"
+                                      />
+                                    </div>
+                                    <div className="flex justify-end pt-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => clearDateRangeFilter(field.name)}
+                                        className="h-7 text-xs"
+                                      >
+                                        Clear Filter
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <Input
+                                    placeholder={`Filter ${field.name}...`}
+                                    value={filters[field.name] || ''}
+                                    onChange={(e) => handleFilter(field.name, e.target.value)}
+                                    className="w-full"
+                                  />
+                                )}
                               </div>
                             </DropdownMenuContent>
                           </DropdownMenu>
