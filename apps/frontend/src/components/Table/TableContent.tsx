@@ -836,7 +836,7 @@ export default function TableContent() {
                     Add Record
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Add New Row</DialogTitle>
                   </DialogHeader>
