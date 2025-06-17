@@ -126,6 +126,24 @@ export default function TableCreate() {
       hidden: false,
     })
   }  
+
+  // Add a new field at specific index
+  const addFieldAtIndex = (index: number) => {
+    const newField: FormValues['fields'][0] = {
+      name: "",
+      type: "TEXT",
+      unique: false,
+      required: false,
+      hidden: false,
+    }
+    const currentFields = form.getValues("fields")
+    const updatedFields = [
+      ...currentFields.slice(0, index + 1),
+      newField,
+      ...currentFields.slice(index + 1)
+    ]
+    form.setValue("fields", updatedFields)
+  }
   
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -385,117 +403,154 @@ export default function TableCreate() {
                   ) : (
                     <div className="space-y-6">
                       {fields.map((field, index) => (
-                        <Card key={field.id} className="relative">
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-center">
-                              <CardTitle className="text-base">Field {index + 1}</CardTitle>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => remove(index)}
-                                className="h-8 w-8 absolute top-2 right-2"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Remove field</span>
-                              </Button>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4 pt-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormField
-                                control={form.control}
-                                name={`fields.${index}.name`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Field Name</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="Enter field name" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name={`fields.${index}.type`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Field Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <div key={field.id}>
+                          <Card className="relative">
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-base">Field {index + 1}</CardTitle>
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => addFieldAtIndex(index)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    <span className="sr-only">Add field after this</span>
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => remove(index)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Remove field</span>
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4 pt-0">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                  control={form.control}
+                                  name={`fields.${index}.name`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Field Name</FormLabel>
                                       <FormControl>
-                                        <SelectTrigger className="w-full">
-                                          <SelectValue placeholder="Select field type" />
-                                        </SelectTrigger>
+                                        <Input placeholder="Enter field name" {...field} />
                                       </FormControl>
-                                      <SelectContent>
-                                        {fieldTypes.map((type) => (
-                                          <SelectItem key={type} value={type}>
-                                            {type}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <FormField
-                                control={form.control}
-                                name={`fields.${index}.unique`}
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                    <div className="space-y-0.5">
-                                      <FormLabel>Unique</FormLabel>
-                                      <FormDescription>Values must be unique</FormDescription>
-                                    </div>
-                                    <FormControl>
-                                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
+                                <FormField
+                                  control={form.control}
+                                  name={`fields.${index}.type`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Field Type</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select field type" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {fieldTypes.map((type) => (
+                                            <SelectItem key={type} value={type}>
+                                              {type}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
 
-                              <FormField
-                                control={form.control}
-                                name={`fields.${index}.required`}
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                    <div className="space-y-0.5">
-                                      <FormLabel>Required</FormLabel>
-                                      <FormDescription>Field cannot be empty</FormDescription>
-                                    </div>
-                                    <FormControl>
-                                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField
+                                  control={form.control}
+                                  name={`fields.${index}.unique`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                      <div className="space-y-0.5">
+                                        <FormLabel>Unique</FormLabel>
+                                        <FormDescription>Values must be unique</FormDescription>
+                                      </div>
+                                      <FormControl>
+                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
 
-                              <FormField
-                                control={form.control}
-                                name={`fields.${index}.hidden`}
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                    <div className="space-y-0.5">
-                                      <FormLabel>Hidden</FormLabel>
-                                      <FormDescription>Hide from default view</FormDescription>
-                                    </div>
-                                    <FormControl>
-                                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
+                                <FormField
+                                  control={form.control}
+                                  name={`fields.${index}.required`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                      <div className="space-y-0.5">
+                                        <FormLabel>Required</FormLabel>
+                                        <FormDescription>Field cannot be empty</FormDescription>
+                                      </div>
+                                      <FormControl>
+                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
 
-                            {/* Options for SELECT and MULTISELECT types */}
-                            {/* {(form.watch(`fields.${index}.type`) === "SELECT" ||
-                              form.watch(`fields.${index}.type`) === "MULTISELECT") && (
+                                <FormField
+                                  control={form.control}
+                                  name={`fields.${index}.hidden`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                      <div className="space-y-0.5">
+                                        <FormLabel>Hidden</FormLabel>
+                                        <FormDescription>Hide from default view</FormDescription>
+                                      </div>
+                                      <FormControl>
+                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Options for SELECT and MULTISELECT types */}
+                              {/* {(form.watch(`fields.${index}.type`) === "SELECT" ||
+                                form.watch(`fields.${index}.type`) === "MULTISELECT") && (
+                                  <FormField
+                                    control={form.control}
+                                    name={`fields.${index}.options`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Options</FormLabel>
+                                        <FormControl>
+                                          <Textarea
+                                            placeholder="Enter options, comma seperated "
+                                            className="resize-none"
+                                            value={field.value}
+                                            onChange={(e) => {
+                                              const options = e.target.value
+                                              field.onChange(options)
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormDescription>Enter each option on a new line</FormDescription>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                )} */}
+                                {(form.watch(`fields.${index}.type`) === "SELECT") && (
                                 <FormField
                                   control={form.control}
                                   name={`fields.${index}.options`}
@@ -518,33 +573,10 @@ export default function TableCreate() {
                                     </FormItem>
                                   )}
                                 />
-                              )} */}
-                              {(form.watch(`fields.${index}.type`) === "SELECT") && (
-                              <FormField
-                                control={form.control}
-                                name={`fields.${index}.options`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Options</FormLabel>
-                                    <FormControl>
-                                      <Textarea
-                                        placeholder="Enter options, comma seperated "
-                                        className="resize-none"
-                                        value={field.value}
-                                        onChange={(e) => {
-                                          const options = e.target.value
-                                          field.onChange(options)
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormDescription>Enter each option on a new line</FormDescription>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            )}
-                          </CardContent>
-                        </Card>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
                       ))}
                     </div>
                   )}

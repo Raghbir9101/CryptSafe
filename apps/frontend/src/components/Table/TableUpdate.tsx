@@ -87,6 +87,24 @@ export default function TableUpdate() {
     })
   }
 
+  // Add a new field at specific index
+  const addFieldAtIndex = (index: number) => {
+    const newField: FormValues['fields'][0] = {
+      name: "",
+      type: "TEXT",
+      unique: false,
+      required: false,
+      hidden: false,
+    }
+    const currentFields = form.getValues("fields")
+    const updatedFields = [
+      ...currentFields.slice(0, index + 1),
+      newField,
+      ...currentFields.slice(index + 1)
+    ]
+    form.setValue("fields", updatedFields)
+  }
+
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
@@ -324,16 +342,28 @@ export default function TableUpdate() {
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-center">
                             <CardTitle className="text-base">Field {index + 1}</CardTitle>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => remove(index)}
-                              className="h-8 w-8 absolute top-2 right-2"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Remove field</span>
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => addFieldAtIndex(index)}
+                                className="h-8 w-8"
+                              >
+                                <Plus className="h-4 w-4" />
+                                <span className="sr-only">Add field after this</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Remove field</span>
+                              </Button>
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-0">

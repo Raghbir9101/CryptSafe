@@ -381,6 +381,9 @@ export default function TableContent() {
     }
     if (!value) return '';
     if (type === 'DATE') {
+      return new Date(value).toLocaleDateString();
+    }
+    if (type === 'DATE-TIME') {
       return new Date(value).toLocaleString();
     }
     return value;
