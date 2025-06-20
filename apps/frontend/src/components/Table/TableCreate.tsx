@@ -1,27 +1,59 @@
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useFieldArray } from "react-hook-form"
-import { Plus, Save, Trash2 } from "lucide-react"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useFieldArray } from "react-hook-form";
+import { Plus, Save, Trash2 } from "lucide-react";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { useNavigate } from "react-router-dom"
-import { Label } from "../ui/label"
-import { toast } from "sonner"
-import { createTable } from "../Services/TableService"
-import { encryptObjectValues } from "../Services/encrption"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "react-router-dom";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
+import { createTable } from "../Services/TableService";
+import { encryptObjectValues } from "../Services/encrption";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Define the field types
 // const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT", "MULTISELECT"] as const
-const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT"] as const
+const fieldTypes = [
+  "TEXT",
+  "NUMBER",
+  "DATE",
+  "DATE-TIME",
+  "BOOLEAN",
+  "SELECT",
+] as const;
 
 // Define the schema for the form
 const formSchema = z.object({
@@ -36,26 +68,26 @@ const formSchema = z.object({
         required: z.boolean().default(false),
         hidden: z.boolean().default(false),
         options: z.string().optional(),
-      }),
+      })
     )
-    .min(1, "At least one field is required")
-    // .refine(
-    //   (fields) => {
-    //     const names = fields.map((field) => field.name.toLowerCase());
-    //     return new Set(names).size === names.length;
-    //   },
-    //   {
-    //     message: "Field names must be unique",
-    //     path: ["fields"],
-    //   }
-    // ),
-})
+    .min(1, "At least one field is required"),
+  // .refine(
+  //   (fields) => {
+  //     const names = fields.map((field) => field.name.toLowerCase());
+  //     return new Set(names).size === names.length;
+  //   },
+  //   {
+  //     message: "Field names must be unique",
+  //     path: ["fields"],
+  //   }
+  // ),
+});
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 export default function TableCreate() {
-  const router = useNavigate()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -73,13 +105,13 @@ export default function TableCreate() {
         },
       ],
     },
-  })
+  });
 
   // Add form-level validation for duplicate field names
   const validateFieldNames = () => {
     const fields = form.getValues("fields");
-    console.log(fields)
-    const fieldNames = fields.map(field => field.name.toLowerCase());
+    console.log(fields);
+    const fieldNames = fields.map((field) => field.name.toLowerCase());
     const seen = new Set();
     const duplicates = [];
 
@@ -92,14 +124,16 @@ export default function TableCreate() {
 
     if (duplicates.length > 0) {
       const lastDuplicateIndex = duplicates[duplicates.length - 1];
-      
+
       // Show toast immediately
       toast.error("Duplicate Field Names", {
         description: "Please ensure all field names are unique.",
       });
 
       // Focus on the last duplicate field
-      const inputElement = document.querySelector(`input[name="fields.${lastDuplicateIndex}.name"]`) as HTMLInputElement;
+      const inputElement = document.querySelector(
+        `input[name="fields.${lastDuplicateIndex}.name"]`
+      ) as HTMLInputElement;
       if (inputElement) {
         inputElement.focus();
         inputElement.select();
@@ -114,7 +148,7 @@ export default function TableCreate() {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "fields",
-  })
+  });
 
   // Add a new field
   const addField = () => {
@@ -124,36 +158,39 @@ export default function TableCreate() {
       unique: false,
       required: false,
       hidden: false,
-    })
-  }  
+    });
+  };
 
   // Add a new field at specific index
   const addFieldAtIndex = (index: number) => {
-    const newField: FormValues['fields'][0] = {
+    const newField: FormValues["fields"][0] = {
       name: "",
       type: "TEXT",
       unique: false,
       required: false,
       hidden: false,
-    }
-    const currentFields = form.getValues("fields")
+    };
+    const currentFields = form.getValues("fields");
     const updatedFields = [
       ...currentFields.slice(0, index + 1),
       newField,
-      ...currentFields.slice(index + 1)
-    ]
-    form.setValue("fields", updatedFields)
-  }
-  
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      ...currentFields.slice(index + 1),
+    ];
+    form.setValue("fields", updatedFields);
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const text = await file.text();
-      const lines = text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+      const lines = text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
 
       if (lines.length < 2) {
         toast.error("CSV file must have a header row and at least one field");
@@ -161,22 +198,34 @@ export default function TableCreate() {
       }
 
       // Parse and validate header row
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-      const expectedHeaders = ['fieldname', 'datatype', 'options', 'unique', 'required', 'hidden'];
-      const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
-      
+      const headers = lines[0]
+        .toLowerCase()
+        .split(",")
+        .map((h) => h.trim());
+      const expectedHeaders = [
+        "fieldname",
+        "datatype",
+        "options",
+        "unique",
+        "required",
+        "hidden",
+      ];
+      const missingHeaders = expectedHeaders.filter(
+        (h) => !headers.includes(h)
+      );
+
       if (missingHeaders.length > 0) {
-        toast.error(`Missing required headers: ${missingHeaders.join(', ')}`);
+        toast.error(`Missing required headers: ${missingHeaders.join(", ")}`);
         return;
       }
 
       // Get header indices
-      const fieldName = headers.indexOf('fieldname');
-      const fieldType = headers.indexOf('datatype');
-      const fieldOptions = headers.indexOf('options');
-      const fieldUnique = headers.indexOf('unique');
-      const fieldRequired = headers.indexOf('required');
-      const fieldHidden = headers.indexOf('hidden');
+      const fieldName = headers.indexOf("fieldname");
+      const fieldType = headers.indexOf("datatype");
+      const fieldOptions = headers.indexOf("options");
+      const fieldUnique = headers.indexOf("unique");
+      const fieldRequired = headers.indexOf("required");
+      const fieldHidden = headers.indexOf("hidden");
 
       // Clear existing fields safely
       const currentLength = fields.length;
@@ -190,8 +239,8 @@ export default function TableCreate() {
       // Parse each field row
       for (let i = 1; i < lines.length; i++) {
         try {
-          const values = lines[i].split(',').map(v => v.trim());
-          console.log("values", values)
+          const values = lines[i].split(",").map((v) => v.trim());
+          console.log("values", values);
           // Validate row length
           if (values.length !== headers.length) {
             errors.push(`Row ${i + 1}: Invalid number of columns`);
@@ -212,10 +261,10 @@ export default function TableCreate() {
           }
 
           // Parse boolean values safely
-          const toBool = (val: string) => val.toLowerCase() === 'true';
-          
+          const toBool = (val: string) => val.toLowerCase() === "true";
+
           // Clean up options string
-          let options = values[fieldOptions] || '';
+          let options = values[fieldOptions] || "";
           if (options.startsWith('"') && options.endsWith('"')) {
             options = options.slice(1, -1);
           }
@@ -227,7 +276,7 @@ export default function TableCreate() {
             options: options.split("^").join(","),
             unique: toBool(values[fieldUnique]),
             required: toBool(values[fieldRequired]),
-            hidden: toBool(values[fieldHidden])
+            hidden: toBool(values[fieldHidden]),
           });
 
           successCount++;
@@ -248,25 +297,26 @@ export default function TableCreate() {
       if (errors.length > 0) {
         console.error("Import errors:", errors);
         toast.error("Some rows could not be imported", {
-          description: errors.slice(0, 3).join('\n') + 
-                      (errors.length > 3 ? `\n...and ${errors.length - 3} more errors` : '')
+          description:
+            errors.slice(0, 3).join("\n") +
+            (errors.length > 3
+              ? `\n...and ${errors.length - 3} more errors`
+              : ""),
         });
       }
-
     } catch (error) {
       console.error("Error reading CSV:", error);
       toast.error("Error reading CSV file");
     } finally {
       // Reset the file input
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
-    
     // First check for empty field names
-    const emptyFields = data.fields.some(field => !field.name.trim());
+    const emptyFields = data.fields.some((field) => !field.name.trim());
     if (emptyFields) {
       toast.error("Empty Field Names", {
         description: "Please fill in all field names.",
@@ -289,20 +339,24 @@ export default function TableCreate() {
       const postData = {
         name: data.name,
         description: data.description,
-        fields: data.fields.map(item => {
+        fields: data.fields.map((item) => {
           return {
             ...item,
-            options: (item.options || "").split(",").filter(Boolean)
-          }
-        })
-      }
-      const encrypted = encryptObjectValues(postData, import.meta.env.VITE_GOOGLE_API);
-      console.log(encrypted,'entypted.')
+            options: (item.options || "").split(",").filter(Boolean),
+          };
+        }),
+      };
+      const encrypted = encryptObjectValues(
+        postData,
+        import.meta.env.VITE_GOOGLE_API
+      );
+      console.log(encrypted, "entypted.");
       const res = await createTable(encrypted);
 
       if (res.status == "error") {
         return toast.error("Error creating table", {
-          description: "There was an error creating your table. Please try again.",
+          description:
+            "There was an error creating your table. Please try again.",
         });
       }
 
@@ -311,33 +365,35 @@ export default function TableCreate() {
       });
 
       router("/tables");
-
     } catch (error) {
       console.error("Error creating table:", error);
       toast.error("Error creating table", {
-        description: "There was an error creating your table. Please try again.",
+        description:
+          "There was an error creating your table. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className="container mx-auto px-6 py-6">
+    <div className="px-1 py-3 md:container md:mx-auto md:px-6 md:py-10">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Create New Table</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight">
+            Create New Table
+          </h1>
         </div>
-        <Card className="p-6">
+        <Card className="py-8 px-0 md:p-6 ">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 px-4 md:px-6 md:space-y-6">
                 {/* Hidden file input for CSV import */}
                 <input
                   type="file"
                   accept=".csv"
                   onChange={handleFileUpload}
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                   id="csvFileInput"
                 />
                 {/* Table Basic Information */}
@@ -362,10 +418,15 @@ export default function TableCreate() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter a description for this table" className="resize-none" {...field} />
+                          <Textarea
+                            placeholder="Enter a description for this table"
+                            className="resize-none"
+                            {...field}
+                          />
                         </FormControl>
-                        <FormDescription>
-                          Optional description to help users understand the purpose of this table.
+                        <FormDescription className="text-xs sm:text-sm">
+                          Optional description to help users understand the
+                          purpose of this table.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -378,18 +439,32 @@ export default function TableCreate() {
                 {/* Fields Section */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Fields</h3>
+                    <h3 className="text-lg font-medium text-base sm:text-lg">
+                      Fields
+                    </h3>
                     <div className="space-x-2">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => document.getElementById('csvFileInput')?.click()}
+                        onClick={() =>
+                          document.getElementById("csvFileInput")?.click()
+                        }
+                        className="text-xs sm:text-sm"
                       >
                         Import Fields
                       </Button>
                       <Button
                         type="button"
-                        onClick={() => append({ name: '', type: 'TEXT', unique: false, required: false, hidden: false })}
+                        onClick={() =>
+                          append({
+                            name: "",
+                            type: "TEXT",
+                            unique: false,
+                            required: false,
+                            hidden: false,
+                          })
+                        }
+                        className="text-xs sm:text-sm hidden"
                       >
                         Add Field
                       </Button>
@@ -397,8 +472,13 @@ export default function TableCreate() {
                   </div>
 
                   {fields.length === 0 ? (
-                    <div className="text-center p-4 border border-dashed rounded-md">
-                      <p className="text-muted-foreground">No fields added yet. Click "Add Field" to start.</p>
+                    <div
+                      className="text-center p-12 border border-dashed rounded-md"
+                      onClick={addField}
+                    >
+                      <p className="text-muted-foreground">
+                        No fields added yet. Click here to start.
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -407,7 +487,9 @@ export default function TableCreate() {
                           <Card className="relative">
                             <CardHeader className="pb-2">
                               <div className="flex justify-between items-center">
-                                <CardTitle className="text-base">Field {index + 1}</CardTitle>
+                                <CardTitle className="text-base">
+                                  Field {index + 1}
+                                </CardTitle>
                                 <div className="flex gap-2">
                                   <Button
                                     type="button"
@@ -417,7 +499,9 @@ export default function TableCreate() {
                                     className="h-8 w-8"
                                   >
                                     <Plus className="h-4 w-4" />
-                                    <span className="sr-only">Add field after this</span>
+                                    <span className="sr-only">
+                                      Add field after this
+                                    </span>
                                   </Button>
                                   <Button
                                     type="button"
@@ -427,7 +511,9 @@ export default function TableCreate() {
                                     className="h-8 w-8"
                                   >
                                     <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Remove field</span>
+                                    <span className="sr-only">
+                                      Remove field
+                                    </span>
                                   </Button>
                                 </div>
                               </div>
@@ -441,7 +527,10 @@ export default function TableCreate() {
                                     <FormItem>
                                       <FormLabel>Field Name</FormLabel>
                                       <FormControl>
-                                        <Input placeholder="Enter field name" {...field} />
+                                        <Input
+                                          placeholder="Enter field name"
+                                          {...field}
+                                        />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -454,7 +543,10 @@ export default function TableCreate() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Field Type</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                      >
                                         <FormControl>
                                           <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Select field type" />
@@ -482,10 +574,15 @@ export default function TableCreate() {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                                       <div className="space-y-0.5">
                                         <FormLabel>Unique</FormLabel>
-                                        <FormDescription>Values must be unique</FormDescription>
+                                        <FormDescription>
+                                          Values must be unique
+                                        </FormDescription>
                                       </div>
                                       <FormControl>
-                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                        <Switch
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
                                       </FormControl>
                                     </FormItem>
                                   )}
@@ -498,10 +595,15 @@ export default function TableCreate() {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                                       <div className="space-y-0.5">
                                         <FormLabel>Required</FormLabel>
-                                        <FormDescription>Field cannot be empty</FormDescription>
+                                        <FormDescription>
+                                          Field cannot be empty
+                                        </FormDescription>
                                       </div>
                                       <FormControl>
-                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                        <Switch
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
                                       </FormControl>
                                     </FormItem>
                                   )}
@@ -514,10 +616,15 @@ export default function TableCreate() {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                                       <div className="space-y-0.5">
                                         <FormLabel>Hidden</FormLabel>
-                                        <FormDescription>Hide from default view</FormDescription>
+                                        <FormDescription>
+                                          Hide from default view
+                                        </FormDescription>
                                       </div>
                                       <FormControl>
-                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                        <Switch
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
                                       </FormControl>
                                     </FormItem>
                                   )}
@@ -550,7 +657,8 @@ export default function TableCreate() {
                                     )}
                                   />
                                 )} */}
-                                {(form.watch(`fields.${index}.type`) === "SELECT") && (
+                              {form.watch(`fields.${index}.type`) ===
+                                "SELECT" && (
                                 <FormField
                                   control={form.control}
                                   name={`fields.${index}.options`}
@@ -563,12 +671,14 @@ export default function TableCreate() {
                                           className="resize-none"
                                           value={field.value}
                                           onChange={(e) => {
-                                            const options = e.target.value
-                                            field.onChange(options)
+                                            const options = e.target.value;
+                                            field.onChange(options);
                                           }}
                                         />
                                       </FormControl>
-                                      <FormDescription>Enter each option on a new line</FormDescription>
+                                      <FormDescription>
+                                        Enter each option on a new line
+                                      </FormDescription>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -583,46 +693,62 @@ export default function TableCreate() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between mt-5">
-                <Button variant="outline" type="button" onClick={() => router(-1)}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => router(-1)}
+                  className="text-xs sm:text-sm "
+                >
                   Cancel
                 </Button>
                 <div className="flex justify-center gap-2">
-                <Button type="button" variant="outline" onClick={addField} className=" flex items-center " >
-                      <Plus className="h-3 w-3" />
-                      <Label className="relative top-[-0.5px]">Add Field</Label>
-                    </Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-[#4161ed] hover:bg-[#1f3fcc]">
-                  {isSubmitting ? (
-                    <span className="flex items-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Creating...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <Save className="mr-2 h-4 w-4" />
-                      Create Table
-                    </span>
-                  )}
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addField}
+                    className=" flex items-center hidden"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <Label className="relative top-[-0.5px] text-xs sm:text-sm ">
+                      Add Field
+                    </Label>
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-[#4161ed] hover:bg-[#1f3fcc]"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Creating...
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-xs sm:text-sm ">
+                        <Save className="mr-2 h-4 w-4" />
+                        Create Table
+                      </span>
+                    )}
+                  </Button>
                 </div>
               </CardFooter>
             </form>
@@ -630,6 +756,5 @@ export default function TableCreate() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

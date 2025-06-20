@@ -14,6 +14,8 @@ interface EmailOptions {
 
 export const sendEmail = async (credentials: EmailCredentials, options: EmailOptions) => {
   try {
+    console.log(options)
+    if(!options.to || !options.subject || !options.text) return
     // Create transporter with dynamic credentials
     const transporter = nodemailer.createTransport({
       service: 'gmail',
