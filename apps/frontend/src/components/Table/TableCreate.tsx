@@ -21,7 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 // Define the field types
 // const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT", "MULTISELECT"] as const
-const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT"] as const
+const fieldTypes = ["TEXT", "NUMBER", "DATE", "DATE-TIME", "BOOLEAN", "SELECT", "ATTACHMENT"] as const
 
 // Define the schema for the form
 const formSchema = z.object({
@@ -227,7 +227,7 @@ export default function TableCreate() {
             options: options.split("^").join(","),
             unique: toBool(values[fieldUnique]),
             required: toBool(values[fieldRequired]),
-            hidden: toBool(values[fieldHidden])
+            hidden: toBool(values[fieldHidden]),
           });
 
           successCount++;
@@ -281,11 +281,7 @@ export default function TableCreate() {
 
     setIsSubmitting(true);
     try {
-      // Here you would typically send the data to your API
-      console.log("Table data:", {
-        ...data,
-      });
-
+    
       const postData = {
         name: data.name,
         description: data.description,
@@ -297,7 +293,6 @@ export default function TableCreate() {
         })
       }
       const encrypted = encryptObjectValues(postData, import.meta.env.VITE_GOOGLE_API);
-      console.log(encrypted,'entypted.')
       const res = await createTable(encrypted);
 
       if (res.status == "error") {
@@ -524,33 +519,8 @@ export default function TableCreate() {
                                 />
                               </div>
 
-                              {/* Options for SELECT and MULTISELECT types */}
-                              {/* {(form.watch(`fields.${index}.type`) === "SELECT" ||
-                                form.watch(`fields.${index}.type`) === "MULTISELECT") && (
-                                  <FormField
-                                    control={form.control}
-                                    name={`fields.${index}.options`}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Options</FormLabel>
-                                        <FormControl>
-                                          <Textarea
-                                            placeholder="Enter options, comma seperated "
-                                            className="resize-none"
-                                            value={field.value}
-                                            onChange={(e) => {
-                                              const options = e.target.value
-                                              field.onChange(options)
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormDescription>Enter each option on a new line</FormDescription>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                )} */}
-                                {(form.watch(`fields.${index}.type`) === "SELECT") && (
+                              {/* Options for SELECT type */}
+                              {(form.watch(`fields.${index}.type`) === "SELECT") && (
                                 <FormField
                                   control={form.control}
                                   name={`fields.${index}.options`}
@@ -573,6 +543,13 @@ export default function TableCreate() {
                                     </FormItem>
                                   )}
                                 />
+                              )}
+
+                              {/* Options for ATTACHMENT type */}
+                              {(form.watch(`fields.${index}.type`) === "ATTACHMENT") && (
+                                <div className="text-sm text-muted-foreground">
+                                  Maximum file size: 50MB
+                                </div>
                               )}
                             </CardContent>
                           </Card>

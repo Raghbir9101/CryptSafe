@@ -40,6 +40,7 @@ import {
 import { SelectedTable } from '../Services/TableService';
 import { Auth } from '../Services/AuthService';
 import { decryptObjectValues, encryptObjectValues } from '../Services/encrption';
+import React from 'react';
 
 interface TableField {
   name: string;
@@ -84,6 +85,7 @@ export default function TableContent() {
   const [totalRows, setTotalRows] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { id } = useParams();
+  const [attachmentModal, setAttachmentModal] = useState<{ url: string, type: string } | null>(null);
 
   useEffect(() => {
     fetchTableData();
@@ -178,15 +180,35 @@ export default function TableContent() {
         }
       }
 
-      // Process the data to handle date conversions
+      // Process the data to handle date conversions and file uploads
       const processedData = { ...row.data };
-      tableFields.forEach((field) => {
-        if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
+      const formData = new FormData();
+
+      for (const field of tableFields) {
+        if (field.type === 'ATTACHMENT' && processedData[field.name] instanceof File) {
+          // Add file to FormData
+          formData.append(field.name, processedData[field.name]);
+          // Store file metadata in processedData
+          processedData[field.name] = {
+            name: processedData[field.name].name,
+            size: processedData[field.name].size,
+            type: processedData[field.name].type
+          };
+        } else if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
+      }
+
+      // Add the processed data to FormData
+      formData.append('data', JSON.stringify(processedData));
+
+      // Upload the data
+      await api.patch(`/tables/update/${id}/${rowId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      const encryptedData = encryptObjectValues(processedData, import.meta.env.VITE_GOOGLE_API);
-      await api.patch(`/tables/update/${id}/${rowId}`, encryptedData);
+
       setEditingRow(null);
       toast.success('Row updated successfully');
       fetchTableData(); // Refresh data to ensure consistency
@@ -339,15 +361,35 @@ export default function TableContent() {
         }
       }
 
-      // Process the data to handle date conversions
+      // Process the data to handle date conversions and file uploads
       const processedData = { ...newRow };
-      tableFields.forEach((field) => {
-        if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
+      const formData = new FormData();
+
+      for (const field of tableFields) {
+        if (field.type === 'ATTACHMENT' && processedData[field.name] instanceof File) {
+          // Add file to FormData
+          formData.append(field.name, processedData[field.name]);
+          // Store file metadata in processedData
+          processedData[field.name] = {
+            name: processedData[field.name].name,
+            size: processedData[field.name].size,
+            type: processedData[field.name].type
+          };
+        } else if ((field.type === "DATE" || field.type === "DATE-TIME") && processedData[field.name]) {
           processedData[field.name] = new Date(processedData[field.name]).toISOString();
         }
+      }
+
+      // Add the processed data to FormData
+      formData.append('data', JSON.stringify(processedData));
+
+      // Upload the data
+      const response = await api.post(`/tables/insert/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      const encryptedData = encryptObjectValues(processedData, import.meta.env.VITE_GOOGLE_API);
-      const response = await api.post(`/tables/insert/${id}`, encryptedData);
+      
       const decryptedResponse = decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API);
       setRows([...rows, decryptedResponse.row]);
 
@@ -391,6 +433,9 @@ export default function TableContent() {
     }
     if (type === 'DATE-TIME') {
       return new Date(value).toLocaleString();
+    }
+    if (type === 'ATTACHMENT') {
+      return value.name || 'No file';
     }
     return value;
   };
@@ -498,6 +543,41 @@ export default function TableContent() {
               ))}
             </SelectContent>
           </Select>
+        );
+      case 'ATTACHMENT':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  // Check file size (50MB = 50 * 1024 * 1024 bytes)
+                  if (file.size > 50 * 1024 * 1024) {
+                    toast.error('File size exceeds 50MB limit');
+                    e.target.value = ''; // Clear the input
+                    return;
+                  }
+                  onChange(file);
+                }
+              }}
+              className={baseInputClass}
+            />
+            {value && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Selected: {value.name || value}</span>
+                {value.size && <span>({(value.size / (1024 * 1024)).toFixed(2)} MB)</span>}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onChange(null)}
+                  className="h-6 px-2"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
         );
       default:
         return (
@@ -932,6 +1012,46 @@ export default function TableContent() {
     );
   };
 
+  // Helper to render attachment preview
+  const renderAttachmentCell = (attachments: string[] | string) => {
+    if (!attachments) return null;
+    console.log(attachments,'attachments')
+    const files = Array.isArray(attachments) ? attachments : [attachments];
+    return (
+      <>
+        {files?.map((file, idx) => {
+          // If file is not a string, try to get the URL or name
+          if (typeof file !== 'string') {
+            // If it has a 'name' property, show the name (not clickable)
+            if (file && file?.name) {
+              return <span key={idx}>{file?.name}</span>;
+            }
+            // Otherwise, skip
+            return null;
+          }
+          const url = file;
+          const fileName = url.split('/').pop();
+          const ext = fileName?.split('.').pop()?.toLowerCase();
+          let type = 'other';
+          if (["jpg","jpeg","png","gif","bmp","webp"].includes(ext || '')) type = 'image';
+          else if (["mp4","webm","ogg","mov","avi","mkv"].includes(ext || '')) type = 'video';
+          else if (["pdf"].includes(ext || '')) type = 'pdf';
+          return (
+            <span key={idx} style={{ marginRight: 8 }}>
+              <a
+                href="#"
+                onClick={e => { e.preventDefault(); setAttachmentModal({ url, type }); }}
+                style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                {fileName}
+              </a>
+            </span>
+          );
+        })}
+      </>
+    );
+  };
+
   return (
     <div className='container mx-auto px-6 py-20'>
       <div className="space-y-4">
@@ -1215,11 +1335,11 @@ export default function TableContent() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span className="truncate">
-                                      {formatValue(row.data[field.name], field.type)}
+                                      {field.type === 'ATTACHMENT' ? renderAttachmentCell(row.data[field.name]) : formatValue(row.data[field.name], field.type)}
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-[300px] break-words">
-                                    <p className="whitespace-pre-wrap">{formatValue(row.data[field.name], field.type)}</p>
+                                    <p className="whitespace-pre-wrap">{field.type === 'ATTACHMENT' ? renderAttachmentCell(row.data[field.name]) : formatValue(row.data[field.name], field.type)}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -1396,6 +1516,29 @@ export default function TableContent() {
         <div className="rounded-lg border bg-white text-card-foreground shadow-[0_8px_30px_rgb(0,0,0,0.18)]">
           {renderPagination()}
         </div>
+
+        {/* Add modal for preview */}
+        {attachmentModal && (
+          <Dialog open={!!attachmentModal} onOpenChange={() => setAttachmentModal(null)}>
+            <DialogContent style={{ maxWidth: 600 }}>
+              <DialogHeader>
+                <DialogTitle>Preview</DialogTitle>
+              </DialogHeader>
+              {attachmentModal.type === 'image' && (
+                <img src={attachmentModal.url} alt="attachment" style={{ maxWidth: '100%', maxHeight: 400 }} />
+              )}
+              {attachmentModal.type === 'video' && (
+                <video src={attachmentModal.url} controls style={{ maxWidth: '100%', maxHeight: 400 }} />
+              )}
+              {attachmentModal.type === 'pdf' && (
+                <iframe src={attachmentModal.url} style={{ width: '100%', height: 400 }} title="PDF Preview" />
+              )}
+              {attachmentModal.type === 'other' && (
+                <a href={attachmentModal.url} target="_blank" rel="noopener noreferrer">Open File</a>
+              )}
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
 

@@ -12,7 +12,7 @@ export interface TableInterface {
 
 export interface FieldInterface {
     name: string;
-    type: "TEXT" | "NUMBER" | "DATE" | "DATE-TIME" | "BOOLEAN" | "SELECT" | "MULTISELECT";
+    type: "TEXT" | "NUMBER" | "DATE" | "DATE-TIME" | "BOOLEAN" | "SELECT" | "MULTISELECT" | "ATTACHMENT";
     unique: boolean;
     required: boolean;
     hidden: boolean;

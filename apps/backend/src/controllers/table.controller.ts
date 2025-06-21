@@ -7,7 +7,33 @@ import { TableInterface } from "@repo/types";
 import User from "../models/user.model";
 import { decryptObjectValues, encryptObjectValues } from "../utils/encryption";
 import { sendEmail } from "../utils/emailService";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
+
+// Set up multer storage for file uploads
+const uploadDir = path.join(__dirname, "../../../uploads");
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+});
+export const upload = multer({ storage });
+
+// Helper to get the base URL for file links
+function getBaseUrl(req: any) {
+    console.log(process.env.BACKEND_HOST || (req.protocol + '://' + req.get('host')),'kaddu')
+    return process.env.BACKEND_HOST || (req.protocol + '://' + req.get('host'));
+}
 
 export default class TableController {
 
@@ -213,7 +239,16 @@ export default class TableController {
         if (error) {
             return res.status(400).json({ message: error })
         }
-        const data = req.body;
+        let data = req.body;
+        // If data is sent as a string (from multipart/form-data), parse it
+        if (typeof req.body.data === 'string') {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (e) {
+                return res.status(400).json({ message: "Invalid data format" });
+            }
+        }
+        console.log(req.body,'this is the body')
         if (!tableID) {
             return res.status(400).json({ message: "Table ID is required" })
         }
@@ -224,6 +259,40 @@ export default class TableController {
         const table = await Table.findById(tableID);
         if (!table) {
             return res.status(400).json({ message: "Table not found" })
+        }
+
+        // Handle file uploads for ATTACHMENT fields
+        for (let field of table.fields) {
+            if (field.type === "ATTACHMENT") {
+                if (req.files && req.files[field.name]) {
+                    const files = Array.isArray(req.files[field.name]) ? req.files[field.name] : [req.files[field.name]];
+                    data[field.name] = files.map((file) => ({
+                        url: `${getBaseUrl(req)}/uploads/${file.filename}`,
+                        uuid: file.filename
+                    }));
+                } else if (data[field.name]) {
+                    // No new file, but value exists (string, array, or object)
+                    if (Array.isArray(data[field.name])) {
+                        data[field.name] = data[field.name].map((val: any) => {
+                            if (typeof val === 'string' && val.startsWith('http')) return val;
+                            if (typeof val === 'string') return `${getBaseUrl(req)}/uploads/${val}`;
+                            if (val && typeof val === 'object' && val.name) return `${getBaseUrl(req)}/uploads/${val.name}`;
+                            if (val && val.url) return val.url;
+                            return '';
+                        });
+                    } else if (typeof data[field.name] === 'string') {
+                        if (!data[field.name].startsWith('http')) {
+                            data[field.name] = [`${getBaseUrl(req)}/uploads/${data[field.name]}`];
+                        } else {
+                            data[field.name] = [data[field.name]];
+                        }
+                    } else if (data[field.name] && typeof data[field.name] === 'object' && data[field.name].name) {
+                        data[field.name] = [`${getBaseUrl(req)}/uploads/${data[field.name].name}`];
+                    } else if (data[field.name] && data[field.name].url) {
+                        data[field.name] = [data[field.name].url];
+                    }
+                }
+            }
         }
 
         // Check unique constraints
@@ -261,6 +330,7 @@ export default class TableController {
                     data[field.name] = Number(data[field.name])
                     break;
                 case "DATE":
+                case "DATE-TIME":
                     data[field.name] = new Date(data[field.name])
                     break;
                 case "BOOLEAN":
@@ -275,6 +345,8 @@ export default class TableController {
             }
         }
 
+        // Before saving, log the final data object
+        console.log('Final data to save:', data);
         const row = await Data.create({ data, createdBy: req?.user?._id, tableID })
         res.status(200).json({ row, message: "Row inserted successfully" })
     })
@@ -285,8 +357,8 @@ export default class TableController {
             return res.status(400).json({ message: error })
         }
         const { id:tableID, rowID } = req.params;
+        console.log(req.body,'this is data')
         const data = req.body;
-
         if (!tableID || !rowID) {
             return res.status(400).json({ message: "Table ID and Row ID are required" })
         }
@@ -294,6 +366,40 @@ export default class TableController {
         const table = await Table.findById(tableID);
         if (!table) {
             return res.status(400).json({ message: "Table not found" })
+        }
+
+        // Handle file uploads for ATTACHMENT fields
+        for (let field of table.fields) {
+            if (field.type === "ATTACHMENT") {
+                if (req.files && req.files[field.name]) {
+                    const files = Array.isArray(req.files[field.name]) ? req.files[field.name] : [req.files[field.name]];
+                    data[field.name] = files.map((file) => ({
+                        url: `${getBaseUrl(req)}/uploads/${file.filename}`,
+                        uuid: file.filename
+                    }));
+                } else if (data[field.name]) {
+                    // No new file, but value exists (string, array, or object)
+                    if (Array.isArray(data[field.name])) {
+                        data[field.name] = data[field.name].map((val: any) => {
+                            if (typeof val === 'string' && val.startsWith('http')) return val;
+                            if (typeof val === 'string') return `${getBaseUrl(req)}/uploads/${val}`;
+                            if (val && typeof val === 'object' && val.name) return `${getBaseUrl(req)}/uploads/${val.name}`;
+                            if (val && val.url) return val.url;
+                            return '';
+                        });
+                    } else if (typeof data[field.name] === 'string') {
+                        if (!data[field.name].startsWith('http')) {
+                            data[field.name] = [`${getBaseUrl(req)}/uploads/${data[field.name]}`];
+                        } else {
+                            data[field.name] = [data[field.name]];
+                        }
+                    } else if (data[field.name] && typeof data[field.name] === 'object' && data[field.name].name) {
+                        data[field.name] = [`${getBaseUrl(req)}/uploads/${data[field.name].name}`];
+                    } else if (data[field.name] && data[field.name].url) {
+                        data[field.name] = [data[field.name].url];
+                    }
+                }
+            }
         }
 
         // Check unique constraints
@@ -323,6 +429,7 @@ export default class TableController {
                         data[field.name] = Number(data[field.name])
                         break;
                     case "DATE":
+                    case "DATE-TIME":
                         data[field.name] = new Date(data[field.name])
                         break;
                     case "BOOLEAN":

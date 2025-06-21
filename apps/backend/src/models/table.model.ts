@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 import { TableInterface } from "@repo/types";
 import { conn1 } from "../config/database";
 
-const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
+const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT","ATTACHMENT"];
 
 // Add this new schema before the tableSchema
 const networkAccessSchema: Schema = new Schema({
