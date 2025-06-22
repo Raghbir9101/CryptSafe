@@ -1013,40 +1013,47 @@ export default function TableContent() {
   };
 
   // Helper to render attachment preview
-  const renderAttachmentCell = (attachments: string[] | string) => {
+  const renderAttachmentCell = (attachments: any[] | any) => {
     if (!attachments) return null;
     console.log(attachments,'attachments')
     const files = Array.isArray(attachments) ? attachments : [attachments];
     return (
       <>
-        {files?.map((file, idx) => {
-          // If file is not a string, try to get the URL or name
-          if (typeof file !== 'string') {
-            // If it has a 'name' property, show the name (not clickable)
-            if (file && file?.name) {
-              return <span key={idx}>{file?.name}</span>;
-            }
-            // Otherwise, skip
-            return null;
+        {files.map((file, idx) => {
+          if (typeof file === 'string') {
+            // fallback for old data: treat as URL
+            const url = file;
+            const fileName = url.split('/').pop();
+            return (
+              <span key={idx} style={{ marginRight: 8 }}>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  {fileName}
+                </a>
+              </span>
+            );
+          } else if (file && typeof file === 'object' && file.url && file.originalName) {
+            // new format: object with url and originalName
+            return (
+              <span key={idx} style={{ marginRight: 8 }}>
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  {file.originalName}
+                </a>
+              </span>
+            );
+          } else {
+            // fallback: just show JSON
+            return <span key={idx}>{JSON.stringify(file)}</span>;
           }
-          const url = file;
-          const fileName = url.split('/').pop();
-          const ext = fileName?.split('.').pop()?.toLowerCase();
-          let type = 'other';
-          if (["jpg","jpeg","png","gif","bmp","webp"].includes(ext || '')) type = 'image';
-          else if (["mp4","webm","ogg","mov","avi","mkv"].includes(ext || '')) type = 'video';
-          else if (["pdf"].includes(ext || '')) type = 'pdf';
-          return (
-            <span key={idx} style={{ marginRight: 8 }}>
-              <a
-                href="#"
-                onClick={e => { e.preventDefault(); setAttachmentModal({ url, type }); }}
-                style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
-              >
-                {fileName}
-              </a>
-            </span>
-          );
         })}
       </>
     );
