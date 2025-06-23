@@ -437,7 +437,14 @@ export default function TableContent() {
     if (type === 'ATTACHMENT') {
       return value.name || 'No file';
     }
-    return value;
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value) && value.length > 0) {
+      return value.map(v => v?.originalName || v?.name || JSON.stringify(v)).join(', ');
+    }
+    if (value && typeof value === 'object') {
+      return value.originalName || value.name || JSON.stringify(value);
+    }
+    return '';
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -457,9 +464,22 @@ export default function TableContent() {
 
     switch (field.type) {
       case 'TEXT':
+        // If value is a string, show as usual. If array/object, show file name or JSON.
+        console.log({field,value})
+        let textValue = '';
+        if (typeof value === 'string') {
+          textValue = value;
+        } else if (Array.isArray(value) && value.length > 0) {
+          // Try to show file name(s)
+          textValue = value.map(v =>
+            v?.originalName || v?.name || JSON.stringify(v)
+          ).join(', ');
+        } else if (value && typeof value === 'object') {
+          textValue = value.originalName || value.name || JSON.stringify(value);
+        }
         return (
           <Input
-            value={value || ''}
+            value={textValue}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${field.name}`}
             className={baseInputClass}
@@ -521,9 +541,19 @@ export default function TableContent() {
           </div>
         );
       case 'TEXTAREA':
+        let textareaValue = '';
+        if (typeof value === 'string') {
+          textareaValue = value;
+        } else if (Array.isArray(value) && value.length > 0) {
+          textareaValue = value.map(v =>
+            v?.originalName || v?.name || JSON.stringify(v)
+          ).join(', ');
+        } else if (value && typeof value === 'object') {
+          textareaValue = value.originalName || value.name || JSON.stringify(value);
+        }
         return (
           <Textarea
-            value={value || ''}
+            value={textareaValue}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${field.name}`}
             className={`${baseInputClass} min-h-[36px] resize-none`}
@@ -552,10 +582,9 @@ export default function TableContent() {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  // Check file size (50MB = 50 * 1024 * 1024 bytes)
                   if (file.size > 50 * 1024 * 1024) {
                     toast.error('File size exceeds 50MB limit');
-                    e.target.value = ''; // Clear the input
+                    e.target.value = '';
                     return;
                   }
                   onChange(file);
@@ -565,8 +594,58 @@ export default function TableContent() {
             />
             {value && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Selected: {value.name || value}</span>
-                {value.size && <span>({(value.size / (1024 * 1024)).toFixed(2)} MB)</span>}
+                <span>
+                  Selected: {
+                    value instanceof File ? (
+                      value.name
+                    ) : Array.isArray(value) ? (
+                      value.map((file, idx) =>
+                        file?.url && file?.originalName ? (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'blue', textDecoration: 'underline' }}
+                          >
+                            {file.originalName}
+                          </a>
+                        ) : file?.name ? (
+                          <span key={idx}>{file.name}</span>
+                        ) : (
+                          <span key={idx}>{JSON.stringify(file)}</span>
+                        )
+                      )
+                    ) : value?.url && value?.originalName ? (
+                      <a
+                        href={value.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+                      >
+                        {value.originalName}
+                      </a>
+                    ) : value?.name ? (
+                      value.name
+                    ) : typeof value === 'string' ? (
+                      value.startsWith('http') ? (
+                        <a
+                          href={value}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: 'blue', textDecoration: 'underline' }}
+                        >
+                          {value.split('/').pop()}
+                        </a>
+                      ) : (
+                        value
+                      )
+                    ) : (
+                      <span>{JSON.stringify(value)}</span>
+                    )
+                  }
+                </span>
+                {value?.size && <span>({(value.size / (1024 * 1024)).toFixed(2)} MB)</span>}
                 <Button
                   variant="ghost"
                   size="sm"
