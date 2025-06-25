@@ -61,6 +61,7 @@ const fieldTypes = [
   "DATE-TIME",
   "BOOLEAN",
   "SELECT",
+  "ATTACHMENT"
 ] as const;
 
 // Define the schema for the form
