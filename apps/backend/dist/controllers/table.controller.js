@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.upload = void 0;
 const asyncHandler_1 = require("../utils/asyncHandler");
 const dotenv_1 = __importDefault(require("dotenv"));
 const errorCodes_1 = require("../utils/errorCodes");
@@ -11,7 +12,36 @@ const data_model_1 = __importDefault(require("../models/data.model"));
 const user_model_1 = __importDefault(require("../models/user.model"));
 const encryption_1 = require("../utils/encryption");
 const emailService_1 = require("../utils/emailService");
+const multer_1 = __importDefault(require("multer"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const uuid_1 = require("uuid");
 dotenv_1.default.config();
+// Set up multer storage for file uploads
+const uploadDir = path_1.default.join(__dirname, "../../../uploads");
+if (!fs_1.default.existsSync(uploadDir)) {
+    fs_1.default.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer_1.default.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique UUID for the file
+        const uniqueUUID = (0, uuid_1.v4)();
+        // Get file extension from original filename
+        const fileExtension = path_1.default.extname(file.originalname);
+        // Create new filename with UUID
+        const newFilename = `${uniqueUUID}${fileExtension}`;
+        cb(null, newFilename);
+    }
+});
+exports.upload = (0, multer_1.default)({ storage });
+// Helper to get the base URL for file links
+function getBaseUrl(req) {
+    console.log(process.env.BACKEND_HOST || (req.protocol + '://' + req.get('host')), 'kaddu');
+    return process.env.BACKEND_HOST || (req.protocol + '://' + req.get('host'));
+}
 class TableController {
     static getAllTableData = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
         // console.log(encryptObjectValues(req?.user?.email, process.env.GOOGLE_API),'kaddu')
@@ -188,7 +218,17 @@ class TableController {
         if (error) {
             return res.status(400).json({ message: error });
         }
-        const data = req.body;
+        let data = req.body;
+        // If data is sent as a string (from multipart/form-data), parse it
+        if (typeof req.body.data === 'string') {
+            try {
+                data = JSON.parse(req.body.data);
+            }
+            catch (e) {
+                return res.status(400).json({ message: "Invalid data format" });
+            }
+        }
+        console.log(req.body, 'this is the body');
         if (!tableID) {
             return res.status(400).json({ message: "Table ID is required" });
         }
@@ -199,8 +239,120 @@ class TableController {
         if (!table) {
             return res.status(400).json({ message: "Table not found" });
         }
+        console.log('Table fields:', table.fields);
+        console.log('Request files:', req.files);
+        console.log('Request body data:', data);
+        // Decrypt field names and types for processing
+        const decryptedFields = table.fields.map(field => ({
+            ...field,
+            name: (0, encryption_1.decryptObjectValues)(field.name, process.env.GOOGLE_API),
+            type: (0, encryption_1.decryptObjectValues)(field.type, process.env.GOOGLE_API)
+        }));
+        console.log('Decrypted fields:', decryptedFields);
+        // Handle file uploads for ATTACHMENT fields
+        for (let field of decryptedFields) {
+            console.log('Processing field:', field.name, 'Type:', field.type);
+            if (field.type === "ATTACHMENT") {
+                console.log('Found ATTACHMENT field:', field.name);
+                const filesForField = req.files?.filter(f => f.fieldname === field.name);
+                if (filesForField && filesForField.length > 0) {
+                    console.log('Processing uploaded files for field:', field.name);
+                    data[field.name] = filesForField.map((file) => {
+                        // Extract UUID from filename (multer now generates UUID filenames)
+                        const fileExtension = path_1.default.extname(file.filename);
+                        const uuid = file.filename.replace(fileExtension, '');
+                        const fileData = {
+                            url: `${getBaseUrl(req)}/uploads/${file.filename}`,
+                            uuid: uuid,
+                            originalName: file.originalname,
+                            filePath: file.path // Use file.path from multer for reliability
+                        };
+                        console.log('Created file data:', fileData);
+                        return fileData;
+                    });
+                }
+                else if (data[field.name]) {
+                    console.log('Processing existing data for field:', field.name, 'Data:', data[field.name]);
+                    // No new file, but value exists (string, array, or object)
+                    if (Array.isArray(data[field.name])) {
+                        data[field.name] = data[field.name].map((val) => {
+                            if (typeof val === 'string' && val.startsWith('http')) {
+                                return {
+                                    url: val,
+                                    uuid: path_1.default.basename(val),
+                                    originalName: path_1.default.basename(val),
+                                    filePath: path_1.default.join(uploadDir, path_1.default.basename(val))
+                                };
+                            }
+                            if (typeof val === 'string') {
+                                return {
+                                    url: `${getBaseUrl(req)}/uploads/${val}`,
+                                    uuid: val,
+                                    originalName: val,
+                                    filePath: path_1.default.join(uploadDir, val)
+                                };
+                            }
+                            if (val && typeof val === 'object' && val.name) {
+                                return {
+                                    url: `${getBaseUrl(req)}/uploads/${val.name}`,
+                                    uuid: val.name,
+                                    originalName: val.name,
+                                    filePath: path_1.default.join(uploadDir, val.name)
+                                };
+                            }
+                            if (val && val.url) {
+                                return {
+                                    url: val.url,
+                                    uuid: val.uuid || path_1.default.basename(val.url),
+                                    originalName: val.originalName || path_1.default.basename(val.url),
+                                    filePath: val.filePath || path_1.default.join(uploadDir, path_1.default.basename(val.url))
+                                };
+                            }
+                            return null;
+                        }).filter(item => item !== null);
+                    }
+                    else if (typeof data[field.name] === 'string') {
+                        if (!data[field.name].startsWith('http')) {
+                            data[field.name] = [{
+                                    url: `${getBaseUrl(req)}/uploads/${data[field.name]}`,
+                                    uuid: data[field.name],
+                                    originalName: data[field.name],
+                                    filePath: path_1.default.join(uploadDir, data[field.name])
+                                }];
+                        }
+                        else {
+                            data[field.name] = [{
+                                    url: data[field.name],
+                                    uuid: path_1.default.basename(data[field.name]),
+                                    originalName: path_1.default.basename(data[field.name]),
+                                    filePath: path_1.default.join(uploadDir, path_1.default.basename(data[field.name]))
+                                }];
+                        }
+                    }
+                    else if (data[field.name] && typeof data[field.name] === 'object' && data[field.name].name) {
+                        data[field.name] = [{
+                                url: `${getBaseUrl(req)}/uploads/${data[field.name].name}`,
+                                uuid: data[field.name].name,
+                                originalName: data[field.name].name,
+                                filePath: path_1.default.join(uploadDir, data[field.name].name)
+                            }];
+                    }
+                    else if (data[field.name] && data[field.name].url) {
+                        data[field.name] = [{
+                                url: data[field.name].url,
+                                uuid: data[field.name].uuid || path_1.default.basename(data[field.name].url),
+                                originalName: data[field.name].originalName || path_1.default.basename(data[field.name].url),
+                                filePath: data[field.name].filePath || path_1.default.join(uploadDir, path_1.default.basename(data[field.name].url))
+                            }];
+                    }
+                }
+                else {
+                    console.log('No files or data found for field:', field.name);
+                }
+            }
+        }
         // Check unique constraints
-        for (let field of table?.fields) {
+        for (let field of decryptedFields) {
             if (field.unique && data[field.name]) {
                 const existingRow = await data_model_1.default.findOne({
                     tableID,
@@ -213,7 +365,7 @@ class TableController {
                 }
             }
         }
-        for (let field of table?.fields) {
+        for (let field of decryptedFields) {
             if (field.type == "TEXT" || field.type == "NUMBER" || field.type == "DATE" || field.type == "BOOLEAN") {
                 if (field.required && data[field.name] == undefined) {
                     return res.status(400).json({ message: `${field.name} is required` });
@@ -232,6 +384,7 @@ class TableController {
                     data[field.name] = Number(data[field.name]);
                     break;
                 case "DATE":
+                case "DATE-TIME":
                     data[field.name] = new Date(data[field.name]);
                     break;
                 case "BOOLEAN":
@@ -243,7 +396,17 @@ class TableController {
                 case "MULTISELECT":
                     data[field.name] = data[field.name]?.split(",");
                     break;
+                case "ATTACHMENT":
+                    // Keep attachment data as is - don't process it
+                    console.log('Keeping attachment data for field:', field.name, 'Data:', data[field.name]);
+                    break;
             }
+        }
+        // Before saving, log the final data object
+        console.log('Final data to save:', JSON.stringify(data, null, 2));
+        console.log('Data keys:', Object.keys(data));
+        for (let key in data) {
+            console.log(`Field ${key}:`, typeof data[key], data[key]);
         }
         const row = await data_model_1.default.create({ data, createdBy: req?.user?._id, tableID });
         res.status(200).json({ row, message: "Row inserted successfully" });
@@ -254,6 +417,7 @@ class TableController {
             return res.status(400).json({ message: error });
         }
         const { id: tableID, rowID } = req.params;
+        console.log(req.body, 'this is data');
         const data = req.body;
         if (!tableID || !rowID) {
             return res.status(400).json({ message: "Table ID and Row ID are required" });
@@ -262,8 +426,120 @@ class TableController {
         if (!table) {
             return res.status(400).json({ message: "Table not found" });
         }
+        console.log('UpdateRow - Table fields:', table.fields);
+        console.log('UpdateRow - Request files:', req.files);
+        console.log('UpdateRow - Request body data:', data);
+        // Decrypt field names and types for processing
+        const decryptedFields = table.fields.map(field => ({
+            ...field,
+            name: (0, encryption_1.decryptObjectValues)(field.name, process.env.GOOGLE_API),
+            type: (0, encryption_1.decryptObjectValues)(field.type, process.env.GOOGLE_API)
+        }));
+        console.log('UpdateRow - Decrypted fields:', decryptedFields);
+        // Handle file uploads for ATTACHMENT fields
+        for (let field of decryptedFields) {
+            console.log('UpdateRow - Processing field:', field.name, 'Type:', field.type);
+            if (field.type === "ATTACHMENT") {
+                console.log('UpdateRow - Found ATTACHMENT field:', field.name);
+                const filesForField = req.files?.filter(f => f.fieldname === field.name);
+                if (filesForField && filesForField.length > 0) {
+                    console.log('UpdateRow - Processing uploaded files for field:', field.name);
+                    data[field.name] = filesForField.map((file) => {
+                        // Extract UUID from filename (multer now generates UUID filenames)
+                        const fileExtension = path_1.default.extname(file.filename);
+                        const uuid = file.filename.replace(fileExtension, '');
+                        const fileData = {
+                            url: `${getBaseUrl(req)}/uploads/${file.filename}`,
+                            uuid: uuid,
+                            originalName: file.originalname,
+                            filePath: file.path // Use file.path from multer for reliability
+                        };
+                        console.log('UpdateRow - Created file data:', fileData);
+                        return fileData;
+                    });
+                }
+                else if (data[field.name]) {
+                    console.log('UpdateRow - Processing existing data for field:', field.name, 'Data:', data[field.name]);
+                    // No new file, but value exists (string, array, or object)
+                    if (Array.isArray(data[field.name])) {
+                        data[field.name] = data[field.name].map((val) => {
+                            if (typeof val === 'string' && val.startsWith('http')) {
+                                return {
+                                    url: val,
+                                    uuid: path_1.default.basename(val),
+                                    originalName: path_1.default.basename(val),
+                                    filePath: path_1.default.join(uploadDir, path_1.default.basename(val))
+                                };
+                            }
+                            if (typeof val === 'string') {
+                                return {
+                                    url: `${getBaseUrl(req)}/uploads/${val}`,
+                                    uuid: val,
+                                    originalName: val,
+                                    filePath: path_1.default.join(uploadDir, val)
+                                };
+                            }
+                            if (val && typeof val === 'object' && val.name) {
+                                return {
+                                    url: `${getBaseUrl(req)}/uploads/${val.name}`,
+                                    uuid: val.name,
+                                    originalName: val.name,
+                                    filePath: path_1.default.join(uploadDir, val.name)
+                                };
+                            }
+                            if (val && val.url) {
+                                return {
+                                    url: val.url,
+                                    uuid: val.uuid || path_1.default.basename(val.url),
+                                    originalName: val.originalName || path_1.default.basename(val.url),
+                                    filePath: val.filePath || path_1.default.join(uploadDir, path_1.default.basename(val.url))
+                                };
+                            }
+                            return null;
+                        }).filter(item => item !== null);
+                    }
+                    else if (typeof data[field.name] === 'string') {
+                        if (!data[field.name].startsWith('http')) {
+                            data[field.name] = [{
+                                    url: `${getBaseUrl(req)}/uploads/${data[field.name]}`,
+                                    uuid: data[field.name],
+                                    originalName: data[field.name],
+                                    filePath: path_1.default.join(uploadDir, data[field.name])
+                                }];
+                        }
+                        else {
+                            data[field.name] = [{
+                                    url: data[field.name],
+                                    uuid: path_1.default.basename(data[field.name]),
+                                    originalName: path_1.default.basename(data[field.name]),
+                                    filePath: path_1.default.join(uploadDir, path_1.default.basename(data[field.name]))
+                                }];
+                        }
+                    }
+                    else if (data[field.name] && typeof data[field.name] === 'object' && data[field.name].name) {
+                        data[field.name] = [{
+                                url: `${getBaseUrl(req)}/uploads/${data[field.name].name}`,
+                                uuid: data[field.name].name,
+                                originalName: data[field.name].name,
+                                filePath: path_1.default.join(uploadDir, data[field.name].name)
+                            }];
+                    }
+                    else if (data[field.name] && data[field.name].url) {
+                        data[field.name] = [{
+                                url: data[field.name].url,
+                                uuid: data[field.name].uuid || path_1.default.basename(data[field.name].url),
+                                originalName: data[field.name].originalName || path_1.default.basename(data[field.name].url),
+                                filePath: data[field.name].filePath || path_1.default.join(uploadDir, path_1.default.basename(data[field.name].url))
+                            }];
+                    }
+                }
+                else {
+                    console.log('UpdateRow - No files or data found for field:', field.name);
+                }
+            }
+        }
         // Check unique constraints
-        for (let field of table?.fields) {
+        for (let field of decryptedFields) {
             if (field.unique && data[field.name]) {
                 const existingRow = await data_model_1.default.findOne({
                     tableID,
@@ -278,7 +554,7 @@ class TableController {
             }
         }
         // Process field types
-        for (let field of table?.fields) {
+        for (let field of decryptedFields) {
             if (data[field.name] !== undefined) {
                 switch (field.type) {
                     case "TEXT":
@@ -288,6 +564,7 @@ class TableController {
                         data[field.name] = Number(data[field.name]);
                         break;
                     case "DATE":
+                    case "DATE-TIME":
                         data[field.name] = new Date(data[field.name]);
                         break;
                     case "BOOLEAN":
@@ -302,8 +579,18 @@ class TableController {
                     case "MULTISELECT":
                         data[field.name] = data[field.name].split(",");
                         break;
+                    case "ATTACHMENT":
+                        // Keep attachment data as is - don't process it
+                        console.log('Keeping attachment data for field:', field.name, 'Data:', data[field.name]);
+                        break;
                 }
             }
+        }
+        // Before saving, log the final data object
+        console.log('UpdateRow - Final data to save:', JSON.stringify(data, null, 2));
+        console.log('UpdateRow - Data keys:', Object.keys(data));
+        for (let key in data) {
+            console.log(`UpdateRow - Field ${key}:`, typeof data[key], data[key]);
         }
         const row = await data_model_1.default.findByIdAndUpdate(rowID, {
             $set: {

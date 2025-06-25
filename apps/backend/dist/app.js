@@ -25,6 +25,7 @@ app.use(express_1.default.json());
 //     res.send("Hello World!");
 // });
 app.use(express_1.default.static(path_1.default.join(__dirname, "../../frontend/dist")));
+app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "../../uploads")));
 app.use("/api", routes_1.default);
 // Error handling middleware
 app.use(errorHandler_1.errorHandler);
