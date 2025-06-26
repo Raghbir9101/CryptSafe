@@ -155,16 +155,20 @@ export default function SharePage() {
     <div className="px-1 py-3 md:container md:mx-auto md:px-6 md:py-10">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Share Table: {table.name}</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-lg sm:text-xl font-semibold tracking-tight mb-2">
+            Share Table: {table.name}
+          </CardTitle>
+          <CardDescription className="text-sm ">
             Share your table with other users and set column-level permissions
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-4 ">
-            <h3 className="text-lg font-medium">Shared Users</h3>
+            <h3 className="text-sm sm:text-lg  font-semibold px-2">
+              Shared Users
+            </h3>
             <Button
-              className="cursor-pointer bg-[#4161ed] hover:bg-[#1f3fcc]"
+              className="cursor-pointer bg-[#4161ed] hover:bg-[#27282d] "
               onClick={() => setIsModalOpen(true)}
             >
               Share with User

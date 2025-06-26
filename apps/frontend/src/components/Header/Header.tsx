@@ -1,8 +1,26 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Shield, Menu, X, Plus, LogOut, LogIn, Database, Home, Info, Mail, Settings } from "lucide-react";
-import { isAuthenticated, logout, getUser, getUserAfterRefresh, Auth } from "../Services/AuthService";
+import {
+  Shield,
+  Menu,
+  X,
+  Plus,
+  LogOut,
+  LogIn,
+  Database,
+  Home,
+  Info,
+  Mail,
+  Settings,
+} from "lucide-react";
+import {
+  isAuthenticated,
+  logout,
+  getUser,
+  getUserAfterRefresh,
+  Auth,
+} from "../Services/AuthService";
 import { configuration } from "@/Utils/utils";
 
 export function Header() {
@@ -47,10 +65,11 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
-        ? "bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-lg shadow-gray-900/5"
-        : "bg-white border-b border-gray-100"
-        }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        isScrolled
+          ? "bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-lg shadow-gray-900/5"
+          : "bg-white border-b border-gray-100"
+      }`}
     >
       {/* Gradient accent line */}
       <div className="h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
@@ -66,7 +85,9 @@ export function Header() {
               <Shield className="h-8 w-8 text-blue-600 group-hover:text-blue-700 transition-colors duration-300 group-hover:scale-110 transform" />
               <div className="absolute inset-0 h-8 w-8 text-blue-600 opacity-20 group-hover:opacity-40 animate-pulse"></div>
             </div>
-            <span className="font-black tracking-tight">{configuration.name}</span>
+            <span className="font-black tracking-tight">
+              {configuration.name}
+            </span>
           </NavLink>
 
           {/* Desktop Navigation */}
@@ -77,10 +98,11 @@ export function Header() {
                 <Button
                   key={item.path}
                   variant="ghost"
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === item.path
-                    ? "bg-blue-50 text-blue-700 shadow-sm"
-                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
-                    }`}
+                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${
+                    location.pathname === item.path
+                      ? "bg-blue-50 text-blue-700 shadow-sm"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
+                  }`}
                   onClick={() => navigate(item.path)}
                 >
                   <item.icon className="h-4 w-4 mr-2" />
@@ -94,10 +116,11 @@ export function Header() {
               {isAuthenticated.value && (
                 <Button
                   variant="ghost"
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${location.pathname === "/tables"
-                    ? "bg-blue-50 text-blue-700 shadow-sm"
-                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
-                    }`}
+                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full group ${
+                    location.pathname === "/tables"
+                      ? "bg-blue-50 text-blue-700 shadow-sm"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50/50"
+                  }`}
                   onClick={() => navigate("/tables")}
                 >
                   <Database className="h-4 w-4 mr-2" />
@@ -141,11 +164,16 @@ export function Header() {
 
               <Button
                 variant={isAuthenticated.value ? "ghost" : "default"}
-                className={`cursor-pointer relative px-6 py-2 text-sm font-medium transition-all duration-300 rounded-full group overflow-hidden ${isAuthenticated.value
-                  ? "text-red-600 hover:text-red-700 hover:bg-red-50"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
-                  }`}
-                onClick={isAuthenticated.value ? handleLogout : () => navigate("/login")}
+                className={`cursor-pointer relative px-6 py-2 text-sm font-medium transition-all duration-300 rounded-full group overflow-hidden ${
+                  isAuthenticated.value
+                    ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                }`}
+                onClick={
+                  isAuthenticated.value
+                    ? handleLogout
+                    : () => navigate("/login")
+                }
               >
                 {!isAuthenticated.value && (
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -188,10 +216,11 @@ export function Header() {
                 <Button
                   key={item.path}
                   variant="ghost"
-                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === item.path
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
-                    }`}
+                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${
+                    location.pathname === item.path
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                  }`}
                   onClick={() => {
                     navigate(item.path);
                     setIsMobileMenuOpen(false);
@@ -205,10 +234,11 @@ export function Header() {
               {isAuthenticated.value && (
                 <Button
                   variant="ghost"
-                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === "/tables"
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
-                    }`}
+                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${
+                    location.pathname === "/tables"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                  }`}
                   onClick={() => {
                     navigate("/tables");
                     setIsMobileMenuOpen(false);
@@ -222,10 +252,11 @@ export function Header() {
               {isAuthenticated.value && getUser()?.isAdmin && (
                 <Button
                   variant="ghost"
-                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${location.pathname === "/admin"
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
-                    }`}
+                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${
+                    location.pathname === "/admin"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                  }`}
                   onClick={() => {
                     navigate("/admin");
                     setIsMobileMenuOpen(false);
@@ -239,10 +270,11 @@ export function Header() {
               {isAuthenticated.value && (
                 <Button
                   variant="ghost"
-                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${isAuthenticated.value
-                    ? "text-red-600 hover:text-red-700 hover:bg-red-50"
-                    : "text-blue-700 hover:bg-blue-50"
-                    }`}
+                  className={`w-full justify-start px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl ${
+                    isAuthenticated.value
+                      ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                      : "text-blue-700 hover:bg-blue-50"
+                  }`}
                   onClick={() => {
                     if (isAuthenticated.value) {
                       handleLogout();

@@ -22,13 +22,13 @@ function App() {
         <AllRoutes />
       </main>
 
-      <InitialPasswordReset 
+      <InitialPasswordReset
         isOpen={Auth.value.showPasswordResetModal}
         onClose={() => {
           Auth.value.showPasswordResetModal = false;
-          navigate('/dashboard');
+          navigate("/dashboard");
         }}
-        userId={Auth.value.passwordResetUserId || ''}
+        userId={Auth.value.passwordResetUserId || ""}
       />
     </div>
   );

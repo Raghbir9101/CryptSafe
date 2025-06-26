@@ -1,90 +1,125 @@
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { FieldInterface, SharedWithInterface, FieldPermissionInterface, WorkingTimeAccessInterface, NetworkAccessInterface } from "@repo/types"
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type {
+  FieldInterface,
+  SharedWithInterface,
+  FieldPermissionInterface,
+  WorkingTimeAccessInterface,
+  NetworkAccessInterface,
+} from "@repo/types";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ShareModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (sharedUser: SharedWithInterface) => void
-  fields: FieldInterface[]
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (sharedUser: SharedWithInterface) => void;
+  fields: FieldInterface[];
 }
 
 const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
-
-  const [email, setEmail] = useState("")
-  const [fieldPermissions, setFieldPermissions] = useState<FieldPermissionInterface[]>(
+  const [email, setEmail] = useState("");
+  const [fieldPermissions, setFieldPermissions] = useState<
+    FieldPermissionInterface[]
+  >(
     fields.map((field) => ({
       fieldName: field.name,
       permission: "READ",
       filter: [],
-    })),
-  )
+    }))
+  );
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>(
-    fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {}),
-  )
-  const [error, setError] = useState("")
+    fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {})
+  );
+  const [error, setError] = useState("");
   const [tablePermissions, setTablePermissions] = useState({
     edit: false,
     delete: false,
-  })
-  const [rowsPerPageLimit, setRowsPerPageLimit] = useState(10)
-  const [workingTimeAccess, setWorkingTimeAccess] = useState<WorkingTimeAccessInterface[]>(
-    ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => ({
+  });
+  const [rowsPerPageLimit, setRowsPerPageLimit] = useState(10);
+  const [workingTimeAccess, setWorkingTimeAccess] = useState<
+    WorkingTimeAccessInterface[]
+  >(
+    ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => ({
       day: day as "SUN" | "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT",
       accessTime: day === "SUN" ? [] : [["09:00", "18:00"]],
-      enabled: true
+      enabled: true,
     }))
-  )
-  const [networkAccess, setNetworkAccess] = useState<NetworkAccessInterface[]>([])
-  const [restrictNetwork, setRestrictNetwork] = useState(false)
-  const [restrictWorkingTime, setRestrictWorkingTime] = useState(false)
+  );
+  const [networkAccess, setNetworkAccess] = useState<NetworkAccessInterface[]>(
+    []
+  );
+  const [restrictNetwork, setRestrictNetwork] = useState(false);
+  const [restrictWorkingTime, setRestrictWorkingTime] = useState(false);
 
-  const handlePermissionChange = (fieldName: string, permission: "READ" | "WRITE") => {
-    setFieldPermissions(fieldPermissions.map((fp) => (fp.fieldName === fieldName ? { ...fp, permission } : fp)))
-  }
+  const handlePermissionChange = (
+    fieldName: string,
+    permission: "READ" | "WRITE"
+  ) => {
+    setFieldPermissions(
+      fieldPermissions.map((fp) =>
+        fp.fieldName === fieldName ? { ...fp, permission } : fp
+      )
+    );
+  };
 
   const handleFilterChange = (fieldName: string, filterString: string) => {
     setFilterInputs({
       ...filterInputs,
       [fieldName]: filterString,
-    })
-  }
+    });
+  };
 
-  const handleTablePermissionChange = (permission: 'edit' | 'delete', value: boolean) => {
-    setTablePermissions(prev => ({
+  const handleTablePermissionChange = (
+    permission: "edit" | "delete",
+    value: boolean
+  ) => {
+    setTablePermissions((prev) => ({
       ...prev,
-      [permission]: value
-    }))
-  }
+      [permission]: value,
+    }));
+  };
 
   const validateEmail = (email: string) => {
-    return email !== ""
-  }
+    return email !== "";
+  };
 
   const handleSubmit = () => {
     if (!validateEmail(email)) {
-      setError("Please select a user")
-      return
+      setError("Please select a user");
+      return;
     }
 
     const updatedFieldPermissions = fieldPermissions.map((fp) => ({
       ...fp,
-      filter: filterInputs[fp.fieldName] ? filterInputs[fp.fieldName].split(",").map((item) => item.trim()) : [],
-    }))
+      filter: filterInputs[fp.fieldName]
+        ? filterInputs[fp.fieldName].split(",").map((item) => item.trim())
+        : [],
+    }));
 
     // Create a simplified network access array without MongoDB-specific fields
-    const simplifiedNetworkAccess = networkAccess.map(access => ({
+    const simplifiedNetworkAccess = networkAccess.map((access) => ({
       IP_ADDRESS: access.IP_ADDRESS,
       enabled: access.enabled,
       comment: access.comment,
-      type: access.type
-    }))
+      type: access.type,
+    }));
 
     const newSharedUser: SharedWithInterface = {
       email,
@@ -96,42 +131,46 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
       networkAccess: simplifiedNetworkAccess, // Use the simplified array
       restrictNetwork,
       restrictWorkingTime,
-    }
+    };
 
-    onSubmit(newSharedUser)
-    resetForm()
-  }
+    onSubmit(newSharedUser);
+    resetForm();
+  };
 
   const resetForm = () => {
-    setEmail("")
+    setEmail("");
     setFieldPermissions(
       fields.map((field) => ({
         fieldName: field.name,
         permission: "READ",
         filter: [],
-      })),
-    )
-    setFilterInputs(fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {}))
-    setError("")
+      }))
+    );
+    setFilterInputs(
+      fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {})
+    );
+    setError("");
     setTablePermissions({
       edit: false,
       delete: false,
-    })
-    setRowsPerPageLimit(10)
-    setWorkingTimeAccess(["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => ({
-      day: day as "SUN" | "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT",
-      accessTime: day === "SUN" ? [] : [["09:00", "18:00"]],
-      enabled: true
-    })))
-    setNetworkAccess([])
-    setRestrictNetwork(false)
-    setRestrictWorkingTime(false)
-  }
+    });
+    setRowsPerPageLimit(10);
+    setWorkingTimeAccess(
+      ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => ({
+        day: day as "SUN" | "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT",
+        accessTime: day === "SUN" ? [] : [["09:00", "18:00"]],
+        enabled: true,
+      }))
+    );
+    setNetworkAccess([]);
+    setRestrictNetwork(false);
+    setRestrictWorkingTime(false);
+  };
 
   const handleClose = () => {
-    resetForm()
-    onClose()
-  }
+    resetForm();
+    onClose();
+  };
 
   const handleTimeRangeChange = (dayIndex: number, timeRanges: string) => {
     const newWorkingTime = [...workingTimeAccess];
@@ -140,10 +179,10 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
     } else {
       newWorkingTime[dayIndex].accessTime = timeRanges
         .split(",")
-        .map(range => range.trim())
-        .filter(range => range.includes("-"))
-        .map(range => {
-          const [start, end] = range.split("-").map(t => t.trim());
+        .map((range) => range.trim())
+        .filter((range) => range.includes("-"))
+        .map((range) => {
+          const [start, end] = range.split("-").map((t) => t.trim());
           return [start, end] as [string, string];
         });
     }
@@ -162,25 +201,26 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
     setWorkingTimeAccess(newWorkingTime);
   };
 
-  const addCurrentIP = async (type: 'IPv4' | 'IPv6') => {
+  const addCurrentIP = async (type: "IPv4" | "IPv6") => {
     try {
       // Use different endpoints for IPv4 and IPv6
-      const endpoint = type === 'IPv6' 
-        ? 'https://api6.ipify.org?format=json'
-        : 'https://api.ipify.org?format=json';
-      
+      const endpoint =
+        type === "IPv6"
+          ? "https://api6.ipify.org?format=json"
+          : "https://api.ipify.org?format=json";
+
       const response = await fetch(endpoint);
       const data = await response.json();
       const ip = data.ip;
-      
+
       setNetworkAccess([
         ...networkAccess,
-        { 
+        {
           IP_ADDRESS: ip,
           enabled: true,
           comment: `Current ${type} Address`,
-          type: type
-        }
+          type: type,
+        },
       ]);
     } catch (error) {
       console.error(`Failed to fetch ${type}:`, error);
@@ -189,7 +229,7 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:w-full max-w-[calc(95%)] px-0 sm:px-6  pt-10 max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Share Table with User</DialogTitle>
         </DialogHeader>
@@ -202,26 +242,39 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
         )}
 
         <div className="space-y-6 py-2">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 px-2">
             <Label htmlFor="user-select" className="w-20 flex-shrink-0">
               Email
             </Label>
             <div className="flex-1">
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email " />
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email "
+              />
             </div>
           </div>
 
           <div>
-            <h3 className="font-medium mb-3">Column Permissions</h3>
+            <h3 className="font-medium mb-3 px-2">Column Permissions</h3>
             <div className="border rounded-md p-4 space-y-6">
               {fields.map((field) => (
-                <div key={field.name} className="flex flex-col sm:flex-row sm:items-start gap-2">
+                <div
+                  key={field.name}
+                  className="flex flex-col sm:flex-row sm:items-start gap-2"
+                >
                   <div className="w-32 pt-2 flex-shrink-0">{field.name}</div>
 
                   <div className="w-32 flex-shrink-0">
                     <Select
-                      value={fieldPermissions.find((fp) => fp.fieldName === field.name)?.permission || "READ"}
-                      onValueChange={(value: "READ" | "WRITE") => handlePermissionChange(field.name, value)}
+                      value={
+                        fieldPermissions.find(
+                          (fp) => fp.fieldName === field.name
+                        )?.permission || "READ"
+                      }
+                      onValueChange={(value: "READ" | "WRITE") =>
+                        handlePermissionChange(field.name, value)
+                      }
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Permission" />
@@ -238,7 +291,9 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                       <Input
                         id={`filter-${field.name}`}
                         value={filterInputs[field.name]}
-                        onChange={(e) => handleFilterChange(field.name, e.target.value)}
+                        onChange={(e) =>
+                          handleFilterChange(field.name, e.target.value)
+                        }
                         placeholder="Filter ( Comma Seperated , )"
                       />
                     </div>
@@ -255,7 +310,9 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                 <div className="flex-1">
                   <Select
                     value={tablePermissions.edit ? "true" : "false"}
-                    onValueChange={(value) => handleTablePermissionChange('edit', value === "true")}
+                    onValueChange={(value) =>
+                      handleTablePermissionChange("edit", value === "true")
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Permission" />
@@ -272,7 +329,9 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                 <div className="flex-1">
                   <Select
                     value={tablePermissions.delete ? "true" : "false"}
-                    onValueChange={(value) => handleTablePermissionChange('delete', value === "true")}
+                    onValueChange={(value) =>
+                      handleTablePermissionChange("delete", value === "true")
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Permission" />
@@ -290,14 +349,18 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
             <h3 className="font-medium mb-3">Rows Per Page Limit</h3>
             <div className="border rounded-md p-4">
               <div className="flex items-center gap-4">
-                <Label htmlFor="rows-limit" className="w-32">Limit</Label>
+                <Label htmlFor="rows-limit" className="w-32">
+                  Limit
+                </Label>
                 <div className="flex-1">
                   <Input
                     id="rows-limit"
                     type="number"
                     min="1"
                     value={rowsPerPageLimit}
-                    onChange={(e) => setRowsPerPageLimit(Number(e.target.value))}
+                    onChange={(e) =>
+                      setRowsPerPageLimit(Number(e.target.value))
+                    }
                   />
                 </div>
               </div>
@@ -307,7 +370,9 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium">Working Time Access</h3>
               <div className="flex items-center gap-2">
-                <Label htmlFor="restrict-working-time">Restrict Working Time</Label>
+                <Label htmlFor="restrict-working-time">
+                  Restrict Working Time
+                </Label>
                 <input
                   type="checkbox"
                   id="restrict-working-time"
@@ -337,13 +402,18 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                   {day.enabled && (
                     <div className="ml-24 space-y-2">
                       {day.accessTime.map((range, rangeIndex) => (
-                        <div key={rangeIndex} className="flex items-center gap-2">
+                        <div
+                          key={rangeIndex}
+                          className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
+                        >
                           <Input
                             type="time"
                             value={range[0]}
                             onChange={(e) => {
                               const newWorkingTime = [...workingTimeAccess];
-                              newWorkingTime[dayIndex].accessTime[rangeIndex][0] = e.target.value;
+                              newWorkingTime[dayIndex].accessTime[
+                                rangeIndex
+                              ][0] = e.target.value;
                               setWorkingTimeAccess(newWorkingTime);
                             }}
                             className="w-32"
@@ -354,7 +424,9 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                             value={range[1]}
                             onChange={(e) => {
                               const newWorkingTime = [...workingTimeAccess];
-                              newWorkingTime[dayIndex].accessTime[rangeIndex][1] = e.target.value;
+                              newWorkingTime[dayIndex].accessTime[
+                                rangeIndex
+                              ][1] = e.target.value;
                               setWorkingTimeAccess(newWorkingTime);
                             }}
                             className="w-32"
@@ -362,7 +434,9 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => removeTimeRange(dayIndex, rangeIndex)}
+                            onClick={() =>
+                              removeTimeRange(dayIndex, rangeIndex)
+                            }
                           >
                             Remove
                           </Button>
@@ -382,7 +456,7 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
             </div>
           </div>
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 px-2">
               <h3 className="font-medium">Network Access</h3>
               <div className="flex items-center gap-2">
                 <Label htmlFor="restrict-network">Restrict Network</Label>
@@ -399,14 +473,14 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => addCurrentIP('IPv4')}
+                  onClick={() => addCurrentIP("IPv4")}
                 >
                   Add Current IPv4
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => addCurrentIP('IPv6')}
+                  onClick={() => addCurrentIP("IPv6")}
                 >
                   Add Current IPv6
                 </Button>
@@ -423,7 +497,11 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                           newNetworkAccess[index].IP_ADDRESS = e.target.value;
                           setNetworkAccess(newNetworkAccess);
                         }}
-                        placeholder={access.type === 'IPv4' ? "IPv4 Address" : "IPv6 Address"}
+                        placeholder={
+                          access.type === "IPv4"
+                            ? "IPv4 Address"
+                            : "IPv6 Address"
+                        }
                       />
                     </div>
                     <div className="flex-1">
@@ -453,12 +531,16 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                       <Label>Enabled</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">{access.type}</span>
+                      <span className="text-sm text-gray-500">
+                        {access.type}
+                      </span>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => {
-                          setNetworkAccess(networkAccess.filter((_, i) => i !== index));
+                          setNetworkAccess(
+                            networkAccess.filter((_, i) => i !== index)
+                          );
                         }}
                       >
                         Remove
@@ -472,7 +554,12 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                   onClick={() => {
                     setNetworkAccess([
                       ...networkAccess,
-                      { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv4' }
+                      {
+                        IP_ADDRESS: "",
+                        enabled: true,
+                        comment: "",
+                        type: "IPv4",
+                      },
                     ]);
                   }}
                   className="bg-[#4161ed] hover:bg-[#1f3fcc]"
@@ -483,7 +570,12 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
                   onClick={() => {
                     setNetworkAccess([
                       ...networkAccess,
-                      { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv6' }
+                      {
+                        IP_ADDRESS: "",
+                        enabled: true,
+                        comment: "",
+                        type: "IPv6",
+                      },
                     ]);
                   }}
                   className="bg-[#4161ed] hover:bg-[#1f3fcc]"
@@ -495,7 +587,7 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
           </div>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-6 px-2">
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
@@ -503,8 +595,7 @@ const ShareModal = ({ isOpen, onClose, onSubmit, fields }: ShareModalProps) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default ShareModal
-
+export default ShareModal;
