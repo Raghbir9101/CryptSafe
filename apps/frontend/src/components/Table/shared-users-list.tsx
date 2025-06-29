@@ -1,89 +1,148 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { FieldInterface, SharedWithInterface, FieldPermissionInterface, WorkingTimeAccessInterface, NetworkAccessInterface } from "@repo/types"
-import { MoreHorizontal, Edit, Trash2, Ban, CheckCircle } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type {
+  FieldInterface,
+  SharedWithInterface,
+  FieldPermissionInterface,
+  WorkingTimeAccessInterface,
+  NetworkAccessInterface,
+} from "@repo/types";
+import { MoreHorizontal, Edit, Trash2, Ban, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 interface SharedUsersListProps {
-  sharedUsers: SharedWithInterface[]
-  fields: FieldInterface[]
-  onUpdate: (email: string, updatedUser: SharedWithInterface) => void
-  onRemove: (email: string) => void
+  sharedUsers: SharedWithInterface[];
+  fields: FieldInterface[];
+  onUpdate: (email: string, updatedUser: SharedWithInterface) => void;
+  onRemove: (email: string) => void;
 }
 
-export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemove }: SharedUsersListProps) {
-  const [editingUser, setEditingUser] = useState<SharedWithInterface | null>(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [fieldPermissions, setFieldPermissions] = useState<FieldPermissionInterface[]>([])
-  const [filterInputs, setFilterInputs] = useState<Record<string, string>>({})
-  const [tablePermissions, setTablePermissions] = useState({ edit: false, delete: false })
-  const [rowsPerPageLimit, setRowsPerPageLimit] = useState(10)
-  const [workingTimeAccess, setWorkingTimeAccess] = useState<WorkingTimeAccessInterface[]>([])
-  const [networkAccess, setNetworkAccess] = useState<NetworkAccessInterface[]>([])
-  const [restrictNetwork, setRestrictNetwork] = useState(false)
-  const [restrictWorkingTime, setRestrictWorkingTime] = useState(false)
+export default function SharedUsersList({
+  sharedUsers,
+  fields,
+  onUpdate,
+  onRemove,
+}: SharedUsersListProps) {
+  const [editingUser, setEditingUser] = useState<SharedWithInterface | null>(
+    null
+  );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [fieldPermissions, setFieldPermissions] = useState<
+    FieldPermissionInterface[]
+  >([]);
+  const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
+  const [tablePermissions, setTablePermissions] = useState({
+    edit: false,
+    delete: false,
+  });
+  const [rowsPerPageLimit, setRowsPerPageLimit] = useState(10);
+  const [workingTimeAccess, setWorkingTimeAccess] = useState<
+    WorkingTimeAccessInterface[]
+  >([]);
+  const [networkAccess, setNetworkAccess] = useState<NetworkAccessInterface[]>(
+    []
+  );
+  const [restrictNetwork, setRestrictNetwork] = useState(false);
+  const [restrictWorkingTime, setRestrictWorkingTime] = useState(false);
 
   const handleEditUser = (user: SharedWithInterface) => {
-    setEditingUser(user)
-    setFieldPermissions(fields.map((field) => {
-      const fieldPermission = user.fieldPermission.find((fp) => fp.fieldName === field.name)
-      return fieldPermission ? fieldPermission : {
-        fieldName: field.name,
-        filter: [],
-        permission: "READ"
-      }
-    }))
+    setEditingUser(user);
+    setFieldPermissions(
+      fields.map((field) => {
+        const fieldPermission = user.fieldPermission.find(
+          (fp) => fp.fieldName === field.name
+        );
+        return fieldPermission
+          ? fieldPermission
+          : {
+              fieldName: field.name,
+              filter: [],
+              permission: "READ",
+            };
+      })
+    );
 
     // Set other user properties
-    setTablePermissions(user.tablePermissions || { edit: false, delete: false })
-    setRowsPerPageLimit(user.rowsPerPageLimit)
-    setWorkingTimeAccess(user.workingTimeAccess)
-    setNetworkAccess(user.networkAccess)
-    setRestrictNetwork(user.restrictNetwork)
-    setRestrictWorkingTime(user.restrictWorkingTime)
+    setTablePermissions(
+      user.tablePermissions || { edit: false, delete: false }
+    );
+    setRowsPerPageLimit(user.rowsPerPageLimit);
+    setWorkingTimeAccess(user.workingTimeAccess);
+    setNetworkAccess(user.networkAccess);
+    setRestrictNetwork(user.restrictNetwork);
+    setRestrictWorkingTime(user.restrictWorkingTime);
 
     // Convert filter arrays to comma-separated strings for editing
-    const initialFilterInputs: Record<string, string> = {}
+    const initialFilterInputs: Record<string, string> = {};
     user.fieldPermission.forEach((fp) => {
-      initialFilterInputs[fp.fieldName] = fp.filter.join(", ")
-    })
-    setFilterInputs(initialFilterInputs)
+      initialFilterInputs[fp.fieldName] = fp.filter.join(", ");
+    });
+    setFilterInputs(initialFilterInputs);
 
-    setIsEditModalOpen(true)
-  }
+    setIsEditModalOpen(true);
+  };
 
-  const handlePermissionChange = (fieldName: string, permission: "READ" | "WRITE" | "NONE") => {
+  const handlePermissionChange = (
+    fieldName: string,
+    permission: "READ" | "WRITE" | "NONE"
+  ) => {
     const temp = fieldPermissions.map((fp) => {
       if (fp.fieldName === fieldName) {
-        return { ...fp, permission }
+        return { ...fp, permission };
       }
       return fp;
-    })
-    setFieldPermissions(temp)
-  }
+    });
+    setFieldPermissions(temp);
+  };
 
   const handleFilterChange = (fieldName: string, filterString: string) => {
     setFilterInputs({
       ...filterInputs,
       [fieldName]: filterString,
-    })
-  }
+    });
+  };
 
   const handleUpdateUser = () => {
-    if (!editingUser) return
+    if (!editingUser) return;
 
     const updatedFieldPermissions = fieldPermissions.map((fp) => ({
       ...fp,
-      filter: filterInputs[fp.fieldName] ? filterInputs[fp.fieldName].split(",").map((item) => item.trim()) : [],
-    }))
+      filter: filterInputs[fp.fieldName]
+        ? filterInputs[fp.fieldName].split(",").map((item) => item.trim())
+        : [],
+    }));
 
     const updatedUser: SharedWithInterface = {
       ...editingUser,
@@ -94,19 +153,19 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
       networkAccess,
       restrictNetwork,
       restrictWorkingTime,
-    }
+    };
 
-    onUpdate(editingUser.email, updatedUser)
-    setIsEditModalOpen(false)
-  }
+    onUpdate(editingUser.email, updatedUser);
+    setIsEditModalOpen(false);
+  };
 
   const handleToggleBlock = (user: SharedWithInterface) => {
     const updatedUser: SharedWithInterface = {
       ...user,
       isBlocked: !user.isBlocked,
-    }
-    onUpdate(user.email, updatedUser)
-  }
+    };
+    onUpdate(user.email, updatedUser);
+  };
 
   const handleTimeRangeChange = (dayIndex: number, timeRanges: string) => {
     const newWorkingTime = [...workingTimeAccess];
@@ -115,10 +174,10 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
     } else {
       newWorkingTime[dayIndex].accessTime = timeRanges
         .split(",")
-        .map(range => range.trim())
-        .filter(range => range.includes("-"))
-        .map(range => {
-          const [start, end] = range.split("-").map(t => t.trim());
+        .map((range) => range.trim())
+        .filter((range) => range.includes("-"))
+        .map((range) => {
+          const [start, end] = range.split("-").map((t) => t.trim());
           return [start, end] as [string, string];
         });
     }
@@ -137,11 +196,12 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
     setWorkingTimeAccess(newWorkingTime);
   };
 
-  const addCurrentIP = async (type: 'IPv4' | 'IPv6') => {
+  const addCurrentIP = async (type: "IPv4" | "IPv6") => {
     try {
-      const endpoint = type === 'IPv6'
-        ? 'https://api6.ipify.org?format=json'
-        : 'https://api.ipify.org?format=json';
+      const endpoint =
+        type === "IPv6"
+          ? "https://api6.ipify.org?format=json"
+          : "https://api.ipify.org?format=json";
 
       const response = await fetch(endpoint);
       const data = await response.json();
@@ -153,8 +213,8 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
           IP_ADDRESS: ip,
           enabled: true,
           comment: `Current ${type} Address`,
-          type: type
-        }
+          type: type,
+        },
       ]);
     } catch (error) {
       console.error(`Failed to fetch ${type}:`, error);
@@ -162,20 +222,32 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
   };
 
   if (sharedUsers.length === 0) {
-    return <div className="text-center py-8 text-muted-foreground">No users have been shared with this table yet.</div>
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No users have been shared with this table yet.
+      </div>
+    );
   }
 
-  console.log(fieldPermissions)
+  console.log(fieldPermissions);
 
   return (
     <div className="rounded-lg border bg-white text-card-foreground shadow-[0_8px_30px_rgb(0,0,0,0.18)] max-h-[calc(100vh-12rem)] overflow-auto">
       <Table>
         <TableHeader>
-        <TableRow>
-            <TableHead className="text-white"><b>Email</b></TableHead>
-            <TableHead className="text-white"><b>Status</b></TableHead>
-            <TableHead className="text-white"><b>Permissions</b></TableHead>
-            <TableHead className="text-right text-white"><b>Actions</b></TableHead>
+          <TableRow>
+            <TableHead className="text-white">
+              <b>Email</b>
+            </TableHead>
+            <TableHead className="text-white">
+              <b>Status</b>
+            </TableHead>
+            <TableHead className="text-white">
+              <b>Permissions</b>
+            </TableHead>
+            <TableHead className="text-right text-white">
+              <b>Actions</b>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -184,7 +256,10 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
               <TableCell>{user.email}</TableCell>
               <TableCell>
                 {user.isBlocked ? (
-                  <Badge variant="destructive" className="flex items-center gap-1">
+                  <Badge
+                    variant="destructive"
+                    className="flex items-center gap-1"
+                  >
                     <Ban className="h-3 w-3" />
                     Blocked
                   </Badge>
@@ -203,11 +278,14 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                   {user?.fieldPermission?.map((fp) => (
                     <Badge
                       key={fp?.fieldName}
-                      variant={fp?.permission === "WRITE" ? "default" : "secondary"}
+                      variant={
+                        fp?.permission === "WRITE" ? "default" : "secondary"
+                      }
                       className="text-xs"
                     >
                       {fp?.fieldName}: {fp?.permission?.toLowerCase()}
-                      {fp.filter?.length > 0 && ` (${fp?.filter.length} filters)`}
+                      {fp.filter?.length > 0 &&
+                        ` (${fp?.filter.length} filters)`}
                     </Badge>
                   ))}
                 </div>
@@ -255,27 +333,38 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
       {/* Edit Modal */}
       {editingUser && (
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:w-full max-w-[calc(95%)] px-0 sm:px-6  pt-10 max-h-[95vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Permissions for {editingUser.email}</DialogTitle>
+              <DialogTitle>
+                Edit Permissions for {editingUser.email}
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6 py-2">
               <div>
-                <h3 className="font-medium mb-3">Column Permissions</h3>
-                <div className="border rounded-md p-4 space-y-6">
+                <h3 className="font-medium mb-3 ml-4 sm:ml-1 text-base sm:text-base">
+                  Column Permissions
+                </h3>
+                <div className="w-full border rounded-md p-4 space-y-6 ">
                   {fields.map((field) => {
                     const fieldPermission = fieldPermissions.find((fp) => {
-                      return fp.fieldName === field.name
-                    })
+                      return fp.fieldName === field.name;
+                    });
                     return (
-                      <div key={field.name} className="flex flex-col sm:flex-row sm:items-start gap-2">
-                        <div className="w-32 pt-2 flex-shrink-0">{field.name}</div>
+                      <div
+                        key={field.name}
+                        className="flex flex-col sm:flex-row sm:items-start gap-2"
+                      >
+                        <div className="w-32 pt-2 flex-shrink-0">
+                          {field.name}
+                        </div>
 
                         <div className="w-32 flex-shrink-0">
                           <Select
                             value={fieldPermission?.permission || "READ"}
-                            onValueChange={(value: "READ" | "WRITE" | "NONE") => handlePermissionChange(field.name, value)}
+                            onValueChange={(value: "READ" | "WRITE" | "NONE") =>
+                              handlePermissionChange(field.name, value)
+                            }
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Permission" />
@@ -293,13 +382,15 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                             <Input
                               id={`filter-edit-${field.name}`}
                               value={filterInputs[field.name] || ""}
-                              onChange={(e) => handleFilterChange(field.name, e.target.value)}
+                              onChange={(e) =>
+                                handleFilterChange(field.name, e.target.value)
+                              }
                               placeholder="Filter ( Comma Seperated , )"
                             />
                           </div>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -312,7 +403,12 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                     <div className="flex-1">
                       <Select
                         value={tablePermissions.edit ? "true" : "false"}
-                        onValueChange={(value) => setTablePermissions(prev => ({ ...prev, edit: value === "true" }))}
+                        onValueChange={(value) =>
+                          setTablePermissions((prev) => ({
+                            ...prev,
+                            edit: value === "true",
+                          }))
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Permission" />
@@ -329,7 +425,12 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                     <div className="flex-1">
                       <Select
                         value={tablePermissions.delete ? "true" : "false"}
-                        onValueChange={(value) => setTablePermissions(prev => ({ ...prev, delete: value === "true" }))}
+                        onValueChange={(value) =>
+                          setTablePermissions((prev) => ({
+                            ...prev,
+                            delete: value === "true",
+                          }))
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Permission" />
@@ -348,14 +449,18 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                 <h3 className="font-medium mb-3">Rows Per Page Limit</h3>
                 <div className="border rounded-md p-4">
                   <div className="flex items-center gap-4">
-                    <Label htmlFor="rows-limit" className="w-32">Limit</Label>
+                    <Label htmlFor="rows-limit" className="w-32">
+                      Limit
+                    </Label>
                     <div className="flex-1">
                       <Input
                         id="rows-limit"
                         type="number"
                         min="1"
                         value={rowsPerPageLimit}
-                        onChange={(e) => setRowsPerPageLimit(Number(e.target.value))}
+                        onChange={(e) =>
+                          setRowsPerPageLimit(Number(e.target.value))
+                        }
                       />
                     </div>
                   </div>
@@ -366,7 +471,9 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-medium">Working Time Access</h3>
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="restrict-working-time">Restrict Working Time</Label>
+                    <Label htmlFor="restrict-working-time">
+                      Restrict Working Time
+                    </Label>
                     <input
                       type="checkbox"
                       id="restrict-working-time"
@@ -386,7 +493,8 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                             checked={day.enabled}
                             onChange={(e) => {
                               const newWorkingTime = [...workingTimeAccess];
-                              newWorkingTime[dayIndex].enabled = e.target.checked;
+                              newWorkingTime[dayIndex].enabled =
+                                e.target.checked;
                               setWorkingTimeAccess(newWorkingTime);
                             }}
                           />
@@ -396,14 +504,21 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                       {day.enabled && (
                         <div className="space-y-2">
                           {day.accessTime.map((range, rangeIndex) => (
-                            <div key={rangeIndex} className="flex items-center gap-2">
+                            <div
+                              key={rangeIndex}
+                              className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
+                            >
                               <div className="flex-1">
                                 <Input
                                   type="time"
                                   value={range[0]}
                                   onChange={(e) => {
-                                    const newWorkingTime = [...workingTimeAccess];
-                                    newWorkingTime[dayIndex].accessTime[rangeIndex][0] = e.target.value;
+                                    const newWorkingTime = [
+                                      ...workingTimeAccess,
+                                    ];
+                                    newWorkingTime[dayIndex].accessTime[
+                                      rangeIndex
+                                    ][0] = e.target.value;
                                     setWorkingTimeAccess(newWorkingTime);
                                   }}
                                 />
@@ -414,8 +529,12 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                                   type="time"
                                   value={range[1]}
                                   onChange={(e) => {
-                                    const newWorkingTime = [...workingTimeAccess];
-                                    newWorkingTime[dayIndex].accessTime[rangeIndex][1] = e.target.value;
+                                    const newWorkingTime = [
+                                      ...workingTimeAccess,
+                                    ];
+                                    newWorkingTime[dayIndex].accessTime[
+                                      rangeIndex
+                                    ][1] = e.target.value;
                                     setWorkingTimeAccess(newWorkingTime);
                                   }}
                                 />
@@ -423,7 +542,9 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => removeTimeRange(dayIndex, rangeIndex)}
+                                onClick={() =>
+                                  removeTimeRange(dayIndex, rangeIndex)
+                                }
                               >
                                 Remove
                               </Button>
@@ -461,14 +582,14 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => addCurrentIP('IPv4')}
+                      onClick={() => addCurrentIP("IPv4")}
                     >
                       Add Current IPv4
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => addCurrentIP('IPv6')}
+                      onClick={() => addCurrentIP("IPv6")}
                     >
                       Add Current IPv6
                     </Button>
@@ -482,10 +603,15 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                             value={access.IP_ADDRESS}
                             onChange={(e) => {
                               const newNetworkAccess = [...networkAccess];
-                              newNetworkAccess[index].IP_ADDRESS = e.target.value;
+                              newNetworkAccess[index].IP_ADDRESS =
+                                e.target.value;
                               setNetworkAccess(newNetworkAccess);
                             }}
-                            placeholder={access.type === 'IPv4' ? "IPv4 Address" : "IPv6 Address"}
+                            placeholder={
+                              access.type === "IPv4"
+                                ? "IPv4 Address"
+                                : "IPv6 Address"
+                            }
                           />
                         </div>
                         <div className="flex-1">
@@ -508,19 +634,24 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                             checked={access.enabled}
                             onChange={(e) => {
                               const newNetworkAccess = [...networkAccess];
-                              newNetworkAccess[index].enabled = e.target.checked;
+                              newNetworkAccess[index].enabled =
+                                e.target.checked;
                               setNetworkAccess(newNetworkAccess);
                             }}
                           />
                           <Label>Enabled</Label>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">{access.type}</span>
+                          <span className="text-sm text-gray-500">
+                            {access.type}
+                          </span>
                           <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => {
-                              setNetworkAccess(networkAccess.filter((_, i) => i !== index));
+                              setNetworkAccess(
+                                networkAccess.filter((_, i) => i !== index)
+                              );
                             }}
                           >
                             Remove
@@ -534,7 +665,12 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                       onClick={() => {
                         setNetworkAccess([
                           ...networkAccess,
-                          { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv4' }
+                          {
+                            IP_ADDRESS: "",
+                            enabled: true,
+                            comment: "",
+                            type: "IPv4",
+                          },
                         ]);
                       }}
                       className="bg-[#4161ed] hover:bg-[#1f3fcc]"
@@ -545,7 +681,12 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
                       onClick={() => {
                         setNetworkAccess([
                           ...networkAccess,
-                          { IP_ADDRESS: "", enabled: true, comment: "", type: 'IPv6' }
+                          {
+                            IP_ADDRESS: "",
+                            enabled: true,
+                            comment: "",
+                            type: "IPv6",
+                          },
                         ]);
                       }}
                       className="bg-[#4161ed] hover:bg-[#1f3fcc]"
@@ -557,16 +698,23 @@ export default function SharedUsersList({ sharedUsers, fields, onUpdate, onRemov
               </div>
             </div>
 
-            <DialogFooter className="mt-6">
-              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+            <DialogFooter className="mt-6 px-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button className="bg-[#4161ed] hover:bg-[#1f3fcc]" onClick={handleUpdateUser}>Save Changes</Button>
+              <Button
+                className="bg-[#4161ed] hover:bg-[#1f3fcc]"
+                onClick={handleUpdateUser}
+              >
+                Save Changes
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
     </div>
-  )
+  );
 }
-
