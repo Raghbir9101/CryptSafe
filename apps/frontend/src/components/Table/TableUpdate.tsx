@@ -503,6 +503,8 @@ export default function TableUpdate() {
                                                   "True/False toggle"}
                                                 {type === "SELECT" &&
                                                   "Single select from options"}
+                                                {type === "ATTACHMENT" &&
+                                                  "File upload field"}
                                               </TooltipContent>
                                             </Tooltip>
                                           </TooltipProvider>

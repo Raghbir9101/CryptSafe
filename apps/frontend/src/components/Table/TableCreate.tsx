@@ -538,11 +538,33 @@ export default function TableCreate() {
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          {fieldTypes.map((type) => {
-                                            return <SelectItem key={type} value={type}>
-                                            {type}
-                                          </SelectItem>
-                                          })}
+                                          {fieldTypes.map((type) => (
+                                            <TooltipProvider key={type}>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <SelectItem value={type}>
+                                                    {type}
+                                                  </SelectItem>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  {type === "TEXT" &&
+                                                    "Free text input"}
+                                                  {type === "NUMBER" &&
+                                                    "Numeric values only"}
+                                                  {type === "DATE" &&
+                                                    "Date picker (without time)"}
+                                                  {type === "DATE-TIME" &&
+                                                    "Date and time picker"}
+                                                  {type === "BOOLEAN" &&
+                                                    "True/False toggle"}
+                                                  {type === "SELECT" &&
+                                                    "Single select from options"}
+                                                  {type === "ATTACHMENT" &&
+                                                    "File upload field"}
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </TooltipProvider>
+                                          ))}
                                         </SelectContent>
                                       </Select>
                                       <FormMessage />
