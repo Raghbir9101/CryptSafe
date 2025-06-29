@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const database_1 = require("../config/database");
-const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT"];
+const validTypes = ["TEXT", "NUMBER", "DATE", "BOOLEAN", "SELECT", "MULTISELECT", "ATTACHMENT"];
 // Add this new schema before the tableSchema
 const networkAccessSchema = new mongoose_1.Schema({
     IP_ADDRESS: { type: String, required: true },

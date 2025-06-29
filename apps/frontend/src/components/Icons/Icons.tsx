@@ -1,5 +1,5 @@
-import * as React from 'react';
-import SvgIcon from '@mui/material/SvgIcon';
+import * as React from "react";
+import SvgIcon from "@mui/material/SvgIcon";
 
 export function SitemarkIcon() {
   return (
@@ -118,3 +118,62 @@ export function GoogleIcon() {
     </SvgIcon>
   );
 }
+
+export const UploadSvgIcon = () => (
+  <>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+    >
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      >
+        <path d="M12 3v12m-4-4l4 4l4-4" />
+        <path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4" />
+      </g>
+    </svg>
+  </>
+);
+
+export const PlusSvgIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+  >
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeDasharray={16}
+      strokeDashoffset={16}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+    >
+      <path d="M5 12h14">
+        <animate
+          fill="freeze"
+          attributeName="stroke-dashoffset"
+          dur="0.4s"
+          values="16;0"
+        />
+      </path>
+      <path d="M12 5v14">
+        <animate
+          fill="freeze"
+          attributeName="stroke-dashoffset"
+          begin="0.4s"
+          dur="0.4s"
+          values="16;0"
+        />
+      </path>
+    </g>
+  </svg>
+);

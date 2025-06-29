@@ -12,8 +12,22 @@ let apiURL = "http://localhost/api";
   }
 export const api = axios.create({
     baseURL: apiURL, // Update with your server URL
-    withCredentials: true,
 });
+
+// Add request interceptor to automatically add Authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export const configuration = {
   name:"Rorsica"
 }

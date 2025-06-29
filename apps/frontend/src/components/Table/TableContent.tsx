@@ -85,7 +85,7 @@ export default function TableContent() {
   const [totalRows, setTotalRows] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { id } = useParams();
-  const [attachmentModal, setAttachmentModal] = useState<{ url: string, type: string } | null>(null);
+  const [attachmentModal, setAttachmentModal] = useState<{ url: string, type: string, filename: string } | null>(null);
 
   useEffect(() => {
     fetchTableData();
@@ -1091,7 +1091,76 @@ export default function TableContent() {
     );
   };
 
-  // Helper to render attachment preview
+  // Helper function to detect file type based on extension
+  const getFileType = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    
+    // Image types
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(extension || '')) {
+      return 'image';
+    }
+    
+    // Video types
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(extension || '')) {
+      return 'video';
+    }
+    
+    // Audio types
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma'].includes(extension || '')) {
+      return 'audio';
+    }
+    
+    // Document types
+    if (['pdf'].includes(extension || '')) {
+      return 'pdf';
+    }
+    
+    // Text files
+    if (['txt', 'md', 'json', 'xml', 'csv', 'log'].includes(extension || '')) {
+      return 'text';
+    }
+    
+    // Code files
+    if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'py', 'java', 'cpp', 'c', 'php', 'rb', 'go', 'rs', 'swift', 'kt'].includes(extension || '')) {
+      return 'code';
+    }
+    
+    // Office documents
+    if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension || '')) {
+      return 'office';
+    }
+    
+    // Archive files
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension || '')) {
+      return 'archive';
+    }
+    
+    return 'other';
+  };
+
+  // Helper function to open attachment in modal
+  const openAttachmentModal = (file: any) => {
+    let url = '';
+    let filename = '';
+    
+    if (typeof file === 'string') {
+      // fallback for old data: treat as URL
+      url = file;
+      filename = file.split('/').pop() || 'Unknown file';
+    } else if (file && typeof file === 'object' && file.url && file.originalName) {
+      // new format: object with url and originalName
+      url = file.url;
+      filename = file.originalName;
+    } else {
+      // fallback: just show JSON
+      console.error('Invalid file format:', file);
+      return;
+    }
+    
+    const fileType = getFileType(filename);
+    setAttachmentModal({ url, type: fileType, filename });
+  };
+
   const renderAttachmentCell = (attachments: any[] | any) => {
     if (!attachments) return null;
     console.log(attachments,'attachments')
@@ -1099,40 +1168,30 @@ export default function TableContent() {
     return (
       <>
         {files.map((file, idx) => {
+          let filename = '';
+          
           if (typeof file === 'string') {
             // fallback for old data: treat as URL
-            const url = file;
-            const fileName = url.split('/').pop();
-            return (
-              <span key={idx} style={{ marginRight: 8 }}>
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
-                >
-                  {fileName}
-                </a>
-              </span>
-            );
+            filename = file.split('/').pop() || 'Unknown file';
           } else if (file && typeof file === 'object' && file.url && file.originalName) {
             // new format: object with url and originalName
-            return (
-              <span key={idx} style={{ marginRight: 8 }}>
-                <a
-                  href={file.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
-                >
-                  {file.originalName}
-                </a>
-              </span>
-            );
+            filename = file.originalName;
           } else {
             // fallback: just show JSON
             return <span key={idx}>{JSON.stringify(file)}</span>;
           }
+          
+          return (
+            <span key={idx} style={{ marginRight: 8 }}>
+              <Button
+                variant="link"
+                className="h-auto p-0 text-blue-600 underline cursor-pointer"
+                onClick={() => openAttachmentModal(file)}
+              >
+                {filename}
+              </Button>
+            </span>
+          );
         })}
       </>
     );
@@ -1606,22 +1665,54 @@ export default function TableContent() {
         {/* Add modal for preview */}
         {attachmentModal && (
           <Dialog open={!!attachmentModal} onOpenChange={() => setAttachmentModal(null)}>
-            <DialogContent style={{ maxWidth: 600 }}>
+            <DialogContent style={{ maxWidth: '90vw', maxHeight: '90vh' }} className="w-[90vw] h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Preview</DialogTitle>
               </DialogHeader>
-              {attachmentModal.type === 'image' && (
-                <img src={attachmentModal.url} alt="attachment" style={{ maxWidth: '100%', maxHeight: 400 }} />
-              )}
-              {attachmentModal.type === 'video' && (
-                <video src={attachmentModal.url} controls style={{ maxWidth: '100%', maxHeight: 400 }} />
-              )}
-              {attachmentModal.type === 'pdf' && (
-                <iframe src={attachmentModal.url} style={{ width: '100%', height: 400 }} title="PDF Preview" />
-              )}
-              {attachmentModal.type === 'other' && (
-                <a href={attachmentModal.url} target="_blank" rel="noopener noreferrer">Open File</a>
-              )}
+              <div className="flex-1 overflow-auto">
+                {attachmentModal.type === 'image' && (
+                  <div className="flex justify-center items-center h-full">
+                    <img 
+                      src={attachmentModal.url} 
+                      alt="attachment" 
+                      className="max-w-full max-h-full object-contain"
+                      style={{ maxHeight: 'calc(90vh - 120px)' }}
+                    />
+                  </div>
+                )}
+                {attachmentModal.type === 'video' && (
+                  <div className="flex justify-center items-center h-full">
+                    <video 
+                      src={attachmentModal.url} 
+                      controls 
+                      className="max-w-full max-h-full"
+                      style={{ maxHeight: 'calc(90vh - 120px)' }}
+                    />
+                  </div>
+                )}
+                {attachmentModal.type === 'pdf' && (
+                  <div className="h-full">
+                    <iframe 
+                      src={attachmentModal.url} 
+                      className="w-full h-full border-0"
+                      title="PDF Preview"
+                      style={{ height: 'calc(90vh - 120px)' }}
+                    />
+                  </div>
+                )}
+                {attachmentModal.type === 'other' && (
+                  <div className="flex justify-center items-center h-full">
+                    <a 
+                      href={attachmentModal.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Open File
+                    </a>
+                  </div>
+                )}
+              </div>
             </DialogContent>
           </Dialog>
         )}

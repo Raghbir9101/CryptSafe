@@ -32,7 +32,15 @@ const storage = multer.diskStorage({
         cb(null, newFilename);
     }
 });
-export const upload = multer({ storage });
+export const upload = multer({ 
+    storage, 
+    limits: { 
+        fileSize: 1024 * 1024 * 50, // 50MB file size limit
+        fieldSize: 1024 * 1024 * 10, // 10MB field size limit
+        fieldNameSize: 100, // 100 bytes for field name
+        fields: 100 // Maximum number of fields
+    } 
+});
 
 // Helper to get the base URL for file links
 function getBaseUrl(req: any) {

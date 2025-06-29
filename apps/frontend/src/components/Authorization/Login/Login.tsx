@@ -116,8 +116,8 @@ export default function Login() {
 
               const response = await api.post('/auth/google/callback', { code });
               if (response.data.success) {
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                sessionStorage.setItem('token', response.data.token);
+                sessionStorage.setItem('user', JSON.stringify(response.data.user));
                 getUserAfterRefresh()
                 navigate('/tables');
               }

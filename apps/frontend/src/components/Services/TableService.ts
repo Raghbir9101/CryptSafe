@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals-react';
+import { computed, signal } from '@preact/signals-react';
 import { TableInterface } from '@repo/types';
 import { api } from '../../Utils/utils';
 import { decryptObjectValues } from './encrption';
@@ -19,7 +19,7 @@ export const SelectedTable = signal<TableInterface | null>(null)
 export const getTables = async () => {
     Table.value = { ...Table.value, status: 'loading' }
     try {
-        const response = await api.get('/tables', { withCredentials: true });
+        const response = await api.get('/tables');
         console.log(response.data,'response.data')
         const decryptedData = decryptObjectValues(response.data, import.meta.env.VITE_GOOGLE_API);
         console.log(decryptedData,'decryptedData')
@@ -34,7 +34,7 @@ export const getTables = async () => {
 export const createTable = async (tableData: any) => {
     Table.value = { ...Table.value, status: 'loading' }
     try {
-        const response = await api.post('/tables', tableData, { withCredentials: true });
+        const response = await api.post('/tables', tableData);
         Table.value = { ...Table.value, data: [...Table.value.data,response.data], status: 'success' }
         return response.data
     } catch (error) {
@@ -46,7 +46,7 @@ export const createTable = async (tableData: any) => {
 export const updateTable = async (id: string, tableData: { name: string, fields: any, description: string }) => {
     Table.value = { ...Table.value, status: 'loading' }
     try {
-        const response = await api.patch(`/tables/${id}`, tableData, { withCredentials: true });
+        const response = await api.patch(`/tables/${id}`, tableData);
         Table.value = { ...Table.value, data: Table.value.data?.map(table => table._id === id ? response.data : table), status: 'success' }
         return response.data;
     } catch (error) {

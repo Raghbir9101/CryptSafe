@@ -9,7 +9,8 @@ const user_model_1 = __importDefault(require("../models/user.model"));
 const request_ip_1 = __importDefault(require("request-ip"));
 const SECRET_KEY = process.env.JWT_SECRET || 'secret';
 const authenticateToken = async (req, res, next) => {
-    const token = req.cookies['authorization'];
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
     if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });
     }

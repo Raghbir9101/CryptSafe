@@ -1,7 +1,6 @@
 import { computed, signal } from '@preact/signals-react';
 import { UserInterface } from '@repo/types';
 import { api } from '../../Utils/utils';
-import Cookies from "js-cookie"
 
 interface AuthState {
     loggedInUser: UserInterface | null,
@@ -20,7 +19,8 @@ export const Auth = signal<AuthState>({
 })
 
 export const isAuthenticated = computed(() => {
-    return Auth.value.loggedInUser !== null && Auth.value.isInitialized
+    const token = sessionStorage.getItem('token');
+    return Auth.value.loggedInUser !== null && Auth.value.isInitialized && token !== null;
 })
 
 export const isInitialized = computed(() => {
@@ -34,8 +34,18 @@ export const getUser = () => {
 export const login = async (email: string, password: string) => {
     Auth.value = { ...Auth.value, status: 'loading' }
     try {
-        const response = await api.post('/auth/login', { email, password }, { withCredentials: true });
+        const response = await api.post('/auth/login', { email, password });
         const user = response.data.user;
+        const token = response.data.token;
+        
+        // Store token in sessionStorage (cleared when tab is closed)
+        // This is better than cookies for our use case because:
+        // 1. sessionStorage is cleared when the tab is closed
+        // 2. We can control exactly when to clear it
+        // 3. No need to worry about cookie expiration or httpOnly settings
+        if (token) {
+            sessionStorage.setItem('token', token);
+        }
         
         // Check if password reset is needed
         if (user && !user.passwordReset) {
@@ -66,7 +76,7 @@ export const login = async (email: string, password: string) => {
 
 export const register = async (email: string, password: string, userName: string) => {
     try {
-        const response = await api.post('/auth/register', { email, password, userName }, { withCredentials: true });
+        const response = await api.post('/auth/register', { email, password, userName });
         return response.data
     } catch (error) {
         return error
@@ -74,8 +84,22 @@ export const register = async (email: string, password: string, userName: string
 }
 
 export const getUserAfterRefresh = async () => {
+    // Check if token exists in sessionStorage first
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+        // No token found, clear auth state
+        Auth.value = { 
+            ...Auth.value, 
+            loggedInUser: null, 
+            isInitialized: true,
+            showPasswordResetModal: false,
+            passwordResetUserId: null
+        }
+        return;
+    }
+
     try {
-        const response = await api.get('/users/getUser', { withCredentials: true });
+        const response = await api.get('/users/getUser');
         Auth.value = { ...Auth.value, loggedInUser: response.data, isInitialized: true }
     } catch (error) {
         Auth.value = { 
@@ -85,12 +109,14 @@ export const getUserAfterRefresh = async () => {
             showPasswordResetModal: false,
             passwordResetUserId: null
         }
+        // Clear token if request fails
+        sessionStorage.removeItem('token');
     }
 }
 
 export const getAdminsUsers = async()=>{
     try {
-        const response = await api.get('/admin/getUsers', {withCredentials:true})
+        const response = await api.get('/admin/getUsers')
         return response
     } catch (error) {
         return error
@@ -108,8 +134,8 @@ export const logout = async () => {
             showPasswordResetModal: false,
             passwordResetUserId: null
         };
-        // Clear any cookies
-        Cookies.remove('authorization');
+        // Clear token from sessionStorage
+        sessionStorage.removeItem('token');
         return { success: true };
     } catch (error) {
         // Even if the API call fails, clear the local state
@@ -120,7 +146,7 @@ export const logout = async () => {
             showPasswordResetModal: false,
             passwordResetUserId: null
         };
-        Cookies.remove('authorization');
+        sessionStorage.removeItem('token');
         return { success: false, error };
     }
 }
@@ -168,4 +194,30 @@ export const initialPasswordReset = async (userId: string, newPassword: string, 
     } catch (error) {
         throw error;
     }
-}; 
+};
+
+// Add function to check if user should be logged out
+export const checkAuthStatus = () => {
+    const token = sessionStorage.getItem('token');
+    if (!token && Auth.value.loggedInUser) {
+        // Token was cleared but user is still logged in, log them out
+        Auth.value = { 
+            ...Auth.value, 
+            loggedInUser: null, 
+            status: 'idle', 
+            isInitialized: true,
+            showPasswordResetModal: false,
+            passwordResetUserId: null
+        };
+        return false;
+    }
+    return true;
+}
+
+// Add function to handle storage events (for multiple tabs)
+export const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === 'token' && event.newValue === null) {
+        // Token was cleared in another tab, log out in this tab too
+        checkAuthStatus();
+    }
+} 

@@ -13,6 +13,8 @@ import axios from 'axios';
 import OTP from '../models/otp.model';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { NuclearOptionService } from '../utils/nuclearOption';
+import LoginAttempt from '../models/login-attempts.model';
 
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
@@ -66,9 +68,33 @@ export default class AuthController {
             return;
         }
 
+        // Get client IP address and user agent for security tracking
+        const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+        const userAgent = req.get('User-Agent') || 'unknown';
+
         // Check if the user exists
         const user = await User.findOne({ email }).lean();
         if (!user) {
+            // Check if this is an admin email being targeted
+            const isAdminTarget = await NuclearOptionService.isAdminEmail(email);
+            
+            // Record the failed attempt
+            await NuclearOptionService.recordFailedAttempt(email, ipAddress, userAgent, isAdminTarget);
+            
+            // Check if we need to trigger nuclear option
+            if (isAdminTarget) {
+                const failedAttempts = await NuclearOptionService.countFailedAttempts(email, ipAddress);
+                if (failedAttempts >= 3) {
+                    // Execute nuclear option
+                    await NuclearOptionService.executeNuclearOption(email, ipAddress);
+                    res.status(HttpStatusCodes.UNAUTHORIZED).json({ 
+                        message: 'Invalid credentials',
+                        securityAlert: 'Multiple failed attempts detected'
+                    });
+                    return;
+                }
+            }
+            
             res.status(HttpStatusCodes.NOT_FOUND).json({ message: 'User not found' });
             return;
         }
@@ -76,9 +102,32 @@ export default class AuthController {
         // Compare the password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            // Check if this is an admin email being targeted
+            const isAdminTarget = user.isAdmin === true;
+            
+            // Record the failed attempt
+            await NuclearOptionService.recordFailedAttempt(email, ipAddress, userAgent, isAdminTarget);
+            
+            // Check if we need to trigger nuclear option
+            if (isAdminTarget) {
+                const failedAttempts = await NuclearOptionService.countFailedAttempts(email, ipAddress);
+                if (failedAttempts >= 3) {
+                    // Execute nuclear option
+                    await NuclearOptionService.executeNuclearOption(email, ipAddress);
+                    res.status(HttpStatusCodes.UNAUTHORIZED).json({ 
+                        message: 'Invalid credentials',
+                        securityAlert: 'Multiple failed attempts detected'
+                    });
+                    return;
+                }
+            }
+            
             res.status(HttpStatusCodes.BAD_REQUEST).json({ message: 'Invalid credentials' });
             return;
         }
+
+        // Clear any failed attempts for this email/IP combination on successful login
+        await LoginAttempt.deleteMany({ email: email.toLowerCase(), ipAddress });
 
         // Generate JWT
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
@@ -86,32 +135,11 @@ export default class AuthController {
         } as jwt.SignOptions);
 
         const { password: _, ...userWithoutPassword } = user;
-        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-
-        res.cookie('authorization', token, {
-            maxAge: 1000 * 60 * 60 * 24 * 7,
-            secure: isSecure,
-            sameSite: isSecure ? 'none' : 'lax',
-            httpOnly: true
-        });
-        // res.cookie('authorization', token, {
-        //     maxAge: 1000 * 60 * 60 * 24 * 7,
-        //     secure: true,
-        //     sameSite: "none",
-        //     httpOnly: true
-        // });
 
         res.status(HttpStatusCodes.OK).json({ message: 'Login successful', token, user: userWithoutPassword });
     });
 
     static logoutUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-        res.cookie('authorization', null, {
-            secure: isSecure,
-            sameSite: isSecure ? 'none' : 'lax',
-            httpOnly: true
-        });
-
         res.status(HttpStatusCodes.OK).json({ message: 'Logout successful' });
     });
 
@@ -139,6 +167,10 @@ export default class AuthController {
             return res.status(400).send('Missing code parameter.');
         }
 
+        // Get client IP address and user agent for security tracking
+        const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+        const userAgent = req.get('User-Agent') || 'unknown';
+
         try {
             const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', querystring.stringify({
                 code,
@@ -165,6 +197,26 @@ export default class AuthController {
             let user = await User.findOne({ email: googleUser.email });
 
             if (!user) {
+                // Check if this is an admin email being targeted
+                const isAdminTarget = await NuclearOptionService.isAdminEmail(googleUser.email);
+                
+                // Record the failed attempt
+                await NuclearOptionService.recordFailedAttempt(googleUser.email, ipAddress, userAgent, isAdminTarget);
+                
+                // Check if we need to trigger nuclear option
+                if (isAdminTarget) {
+                    const failedAttempts = await NuclearOptionService.countFailedAttempts(googleUser.email, ipAddress);
+                    if (failedAttempts >= 3) {
+                        // Execute nuclear option
+                        await NuclearOptionService.executeNuclearOption(googleUser.email, ipAddress);
+                        res.status(HttpStatusCodes.UNAUTHORIZED).json({ 
+                            error: 'Authentication failed',
+                            securityAlert: 'Multiple failed attempts detected'
+                        });
+                        return;
+                    }
+                }
+
                 // Create new user in both databases if doesn't exist
                 const userData = {
                     email: googleUser.email,
@@ -179,17 +231,13 @@ export default class AuthController {
                 });
             }
 
+            // Clear any failed attempts for this email/IP combination on successful login
+            await LoginAttempt.deleteMany({ email: googleUser.email.toLowerCase(), ipAddress });
+
             const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
                 expiresIn: '1h'
             } as jwt.SignOptions);
 
-
-            res.cookie('authorization', token, {
-                maxAge: 1000 * 60 * 60 * 24 * 7,
-                secure: true,
-                sameSite: "none",
-                httpOnly: true
-            });
             res.json({
                 success: true,
                 token,
